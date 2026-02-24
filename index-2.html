@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KM Pro">
+<meta name="theme-color" content="#080909">
+<title>KM Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ─── RESET ─── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+
+/* ─── TOKENS ─── */
+:root{
+  --ink:       #080909;
+  --ink2:      #0e1012;
+  --ink3:      #141618;
+  --ink4:      #1a1d20;
+  --ink5:      #22262a;
+  --line:      #1f2327;
+  --line2:     #2a2f35;
+  --fg:        #eef0f3;
+  --fg2:       #9aa0aa;
+  --fg3:       #4a5260;
+  --gold:      #c8a96e;
+  --gold2:     #e8c98a;
+  --gold3:     #f5dfa8;
+  --gold-bg:   rgba(200,169,110,.10);
+  --gold-ring: rgba(200,169,110,.20);
+  --emerald:   #4db887;
+  --em-bg:     rgba(77,184,135,.10);
+  --ruby:      #e05555;
+  --ruby-bg:   rgba(224,85,85,.10);
+  --sapphire:  #5c8fe0;
+  --sap-bg:    rgba(92,143,224,.10);
+  --safe-t:    env(safe-area-inset-top,0px);
+  --safe-b:    env(safe-area-inset-bottom,0px);
+  --r:         16px;
+  --r-sm:      10px;
+  --shadow:    0 8px 40px rgba(0,0,0,.55);
+  --shadow-sm: 0 2px 12px rgba(0,0,0,.35);
+}
+
+/* ─── APP SHELL ─── */
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ink);color:var(--fg);overflow:hidden}
+.app{display:flex;flex-direction:column;height:100dvh}
+.screens{flex:1;overflow:hidden;position:relative}
+.screen{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:none;
+  padding-top:calc(var(--safe-t) + 0px);padding-bottom:calc(72px + var(--safe-b))}
+.screen.active{display:block;animation:screenIn .28s cubic-bezier(.22,.8,.36,1)}
+@keyframes screenIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.pad{padding:0 20px}
+
+/* ─── NAV ─── */
+.nav{
+  background:rgba(8,9,9,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b);
+  display:grid;grid-template-columns:repeat(5,1fr);z-index:100;flex-shrink:0;
+}
+.ni{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:10px 4px 9px;border:none;background:none;color:var(--fg3);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:9.5px;font-weight:600;
+  letter-spacing:.03em;text-transform:uppercase;cursor:pointer;position:relative;
+  transition:color .2s;-webkit-user-select:none}
+.ni svg{width:22px;height:22px;stroke-width:1.6;transition:transform .2s}
+.ni.active{color:var(--gold)}
+.ni.active svg{transform:scale(1.15)}
+.ni-dot{position:absolute;top:8px;right:calc(50% - 16px);width:7px;height:7px;
+  border-radius:50%;background:var(--ruby);border:1.5px solid var(--ink);display:none}
+
+/* ─── FAB ─── */
+.fab{position:fixed;bottom:calc(80px + var(--safe-b));right:20px;
+  width:52px;height:52px;border-radius:50%;border:none;cursor:pointer;
+  background:linear-gradient(135deg,var(--gold2),var(--gold));
+  color:var(--ink);font-size:24px;font-weight:300;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 24px rgba(200,169,110,.45);z-index:90;
+  transition:transform .18s,box-shadow .18s;font-family:'Plus Jakarta Sans',sans-serif}
+.fab:active{transform:scale(.92);box-shadow:0 2px 12px rgba(200,169,110,.3)}
+
+/* ─── PAGE HEADERS ─── */
+.ph{padding:20px 20px 16px;display:flex;align-items:flex-end;justify-content:space-between}
+.ph-title{font-family:'Cormorant Garamond',serif;font-size:32px;font-weight:600;
+  line-height:1;letter-spacing:-.01em;color:var(--fg)}
+.ph-sub{font-size:12px;color:var(--fg3);margin-top:4px;font-weight:500}
+.ph-action{background:var(--ink4);border:1px solid var(--line2);border-radius:var(--r-sm);
+  padding:7px 14px;font-size:12px;font-weight:600;color:var(--fg2);cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.02em;transition:all .15s}
+.ph-action:active{background:var(--ink5);color:var(--fg)}
+
+/* ─── KPI GRID ─── */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px}
+.kpi{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 16px;position:relative;overflow:hidden;cursor:default}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px}
+.kpi.c-gold::before{background:linear-gradient(90deg,var(--gold),var(--gold3))}
+.kpi.c-em::before{background:var(--emerald)}
+.kpi.c-ruby::before{background:var(--ruby)}
+.kpi.c-sap::before{background:var(--sapphire)}
+.kpi-l{font-size:9.5px;font-weight:700;color:var(--fg3);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:8px}
+.kpi-v{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;
+  line-height:1;color:var(--fg)}
+.kpi-u{font-size:13px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:400;color:var(--fg3)}
+.kpi-s{font-size:10.5px;color:var(--fg3);margin-top:5px;font-weight:500}
+
+/* ─── SECTION LABEL ─── */
+.sl{padding:0 20px 10px;display:flex;align-items:center;justify-content:space-between}
+.sl-t{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase}
+.sl-a{font-size:12px;font-weight:600;color:var(--gold);cursor:pointer;background:none;border:none;
+  font-family:'Plus Jakarta Sans',sans-serif}
+
+/* ─── TRAJET CARD ─── */
+.tc{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  margin:0 20px 10px;padding:16px;cursor:pointer;transition:border-color .15s,background .15s;
+  position:relative;overflow:hidden}
+.tc:active{background:var(--ink4);border-color:var(--line2)}
+.tc-route{font-size:14px;font-weight:600;color:var(--fg);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;margin-bottom:5px;letter-spacing:-.01em}
+.tc-meta{font-size:11.5px;color:var(--fg3);font-weight:500}
+.tc-amount{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
+  color:var(--gold);white-space:nowrap}
+.tc-paid{font-size:10px;color:var(--sapphire);text-align:right;margin-top:2px;font-weight:600}
+
+/* ─── BADGE ─── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 9px 3px 7px;
+  border-radius:99px;font-size:10px;font-weight:700;letter-spacing:.02em}
+.b-wait{background:var(--gold-bg);color:var(--gold2)}
+.b-part{background:var(--sap-bg);color:var(--sapphire)}
+.b-done{background:var(--em-bg);color:var(--emerald)}
+
+/* ─── PROGRESS ─── */
+.prog-wrap{height:4px;background:var(--ink5);border-radius:99px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold3));transition:width .6s ease}
+
+/* ─── SEGMENT ─── */
+.seg{display:flex;background:var(--ink3);border:1px solid var(--line);
+  border-radius:var(--r-sm);padding:3px;gap:2px;margin:0 20px 16px;overflow-x:auto;
+  scrollbar-width:none;-ms-overflow-style:none}
+.seg::-webkit-scrollbar{display:none}
+.seg-b{flex:0 0 auto;padding:7px 14px;border:none;background:transparent;
+  color:var(--fg3);font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;
+  font-weight:600;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap}
+.seg-b.active{background:var(--ink5);color:var(--fg);box-shadow:var(--shadow-sm)}
+
+/* ─── SHEET ─── */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{position:absolute;bottom:0;left:0;right:0;
+  background:var(--ink2);border-radius:24px 24px 0 0;
+  border-top:1px solid var(--line2);
+  padding-bottom:calc(var(--safe-b) + 20px);
+  transform:translateY(100%);
+  transition:transform .35s cubic-bezier(.32,.72,0,1);
+  max-height:96dvh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.overlay.open .sheet{transform:translateY(0)}
+.drag-pill{width:40px;height:4px;border-radius:99px;background:var(--line2);
+  margin:14px auto 0}
+.sh{padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--ink2);z-index:10}
+.sh-title{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600}
+.sh-close{width:30px;height:30px;border-radius:50%;background:var(--ink4);
+  border:none;color:var(--fg3);font-size:16px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;transition:all .15s}
+.sh-close:active{background:var(--ink5);color:var(--fg)}
+.sb{padding:20px}
+.sf{padding:0 20px 4px;display:flex;flex-direction:column;gap:10px}
+
+/* ─── FORMS ─── */
+.fl{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;
+  text-transform:uppercase;display:block;margin-bottom:7px}
+.fi{width:100%;background:var(--ink4);border:1px solid var(--line2);
+  border-radius:12px;padding:13px 14px;color:var(--fg);
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;
+  transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
+.fi:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+.fi::placeholder{color:var(--fg3)}
+.fi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.fg-s{margin-bottom:14px}
+
+/* ─── AUTOCOMPLETE ─── */
+.ac-wrap{position:relative}
+.ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;
+  background:var(--ink4);border:1px solid var(--line2);border-radius:14px;
+  z-index:500;overflow:hidden;box-shadow:var(--shadow);max-height:240px;overflow-y:auto;
+  scrollbar-width:none;display:none}
+.ac-list::-webkit-scrollbar{display:none}
+.ac-list.show{display:block;animation:dropIn .18s cubic-bezier(.22,.8,.36,1)}
+@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.ac-item{padding:12px 14px;cursor:pointer;transition:background .1s;
+  border-bottom:1px solid var(--line)}
+.ac-item:last-child{border-bottom:none}
+.ac-item:active{background:var(--ink5)}
+.ac-main{font-size:13px;font-weight:600;color:var(--fg);margin-bottom:2px}
+.ac-sub{font-size:11px;color:var(--fg3)}
+.ac-loader{padding:14px;text-align:center;font-size:12px;color:var(--fg3)}
+
+/* ─── GPS WRAP ─── */
+.gps-wrap{position:relative}
+.gps-wrap .fi{padding-right:46px}
+.gps-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:30px;height:30px;border-radius:8px;background:var(--ink5);
+  border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;transition:all .15s;z-index:2}
+.gps-btn:active{background:var(--gold-bg);border-color:var(--gold-ring)}
+.gps-btn.loading{animation:pulse .9s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ─── FAV CHIPS ─── */
+.favs{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:7px;margin-bottom:10px;
+  scrollbar-width:none;-ms-overflow-style:none}
+.favs::-webkit-scrollbar{display:none}
+.fav-chip{flex:0 0 auto;display:flex;align-items:center;gap:5px;
+  padding:5px 12px;background:var(--ink4);border:1px solid var(--line2);
+  border-radius:99px;font-size:12px;font-weight:600;color:var(--fg2);
+  cursor:pointer;transition:all .15s;white-space:nowrap}
+.fav-chip:active{background:var(--gold-bg);border-color:var(--gold-ring);color:var(--gold2)}
+
+/* ─── CALC PREVIEW ─── */
+.calc-box{background:var(--gold-bg);border:1px solid var(--gold-ring);
+  border-radius:12px;padding:14px 16px;font-size:13px;color:var(--gold2);
+  line-height:1.6;margin-bottom:14px;transition:all .3s}
+.calc-box.loading{color:var(--fg3);background:var(--ink4);border-color:var(--line2);
+  animation:pulse .9s infinite}
+.calc-big{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;
+  color:var(--gold3);display:block;margin-top:4px}
+
+/* ─── MAP ─── */
+.map-wrap{height:200px;border-radius:14px;overflow:hidden;border:1px solid var(--line2);
+  margin-bottom:14px;display:none;position:relative}
+.map-wrap.show{display:block;animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#trip-map{height:100%;width:100%}
+.leaflet-container{background:var(--ink3)!important;font-family:'Plus Jakarta Sans',sans-serif!important}
+.leaflet-tile{filter:brightness(.55) saturate(.6) hue-rotate(5deg)}
+
+/* ─── ROUTE CALC BTN ─── */
+.route-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--ink4);border:1px solid var(--line2);border-radius:12px;
+  padding:13px;font-size:13px;font-weight:600;color:var(--fg2);cursor:pointer;
+  font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.02em;
+  transition:all .2s;margin-bottom:14px}
+.route-btn:active,.route-btn:hover{background:var(--ink5);border-color:var(--gold-ring);color:var(--gold2)}
+.route-btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ─── BUTTONS ─── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;
+  cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;
+  border-radius:14px;transition:all .15s;-webkit-user-select:none}
+.btn:active{transform:scale(.97);opacity:.9}
+.btn-gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:var(--ink);
+  font-size:15px;padding:15px 20px;width:100%;letter-spacing:.01em}
+.btn-ink{background:var(--ink4);color:var(--fg2);border:1px solid var(--line2);
+  font-size:13px;padding:11px 16px}
+.btn-danger{background:var(--ruby-bg);color:var(--ruby);font-size:13px;padding:11px 16px}
+.btn-em{background:var(--em-bg);color:var(--emerald);font-size:13px;padding:11px 16px}
+
+/* ─── DETAIL ROWS ─── */
+.dr{display:flex;justify-content:space-between;align-items:center;padding:11px 0;
+  border-bottom:1px solid var(--line);font-size:13px}
+.dr:last-child{border-bottom:none}
+.dr-l{color:var(--fg3);font-weight:500}
+.dr-v{font-weight:600;text-align:right;max-width:60%;color:var(--fg)}
+
+/* ─── CHARTS ─── */
+.chart-card{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px 16px;margin:0 20px 12px}
+.chart-ttl{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;
+  text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+.chart-ttl span{width:8px;height:8px;border-radius:50%;display:inline-block}
+
+/* ─── REMB CARD ─── */
+.remb-card{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  margin:0 20px 12px;overflow:hidden}
+.remb-top{padding:16px;display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--line)}
+.remb-hist{padding:4px 0}
+.rh-item{display:flex;justify-content:space-between;align-items:center;
+  padding:12px 16px;border-bottom:1px solid var(--line)}
+.rh-item:last-child{border-bottom:none}
+.rh-amount{font-family:'Cormorant Garamond',serif;font-size:20px;
+  font-weight:600;color:var(--emerald)}
+
+/* ─── EMPTY ─── */
+.empty{text-align:center;padding:56px 24px;color:var(--fg3)}
+.empty-ico{font-size:48px;margin-bottom:14px;opacity:.6}
+.empty h3{font-family:'Cormorant Garamond',serif;font-size:22px;color:var(--fg2);
+  margin-bottom:8px;font-weight:600}
+.empty p{font-size:13px;line-height:1.6;max-width:260px;margin:0 auto}
+
+/* ─── TOAST ─── */
+.toast-wrap{position:fixed;top:calc(var(--safe-t) + 14px);left:16px;right:16px;
+  z-index:9999;pointer-events:none;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--ink4);border:1px solid var(--line2);border-radius:14px;
+  padding:13px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;
+  gap:10px;box-shadow:var(--shadow);pointer-events:all;
+  animation:slideDown .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes slideDown{from{opacity:0;transform:translateY(-20px) scale(.95)}}
+.toast.ok{border-left:3px solid var(--emerald)}
+.toast.err{border-left:3px solid var(--ruby)}
+.toast.tip{border-left:3px solid var(--gold)}
+
+/* ─── INSTALL HINT ─── */
+.hint{background:var(--gold-bg);border:1px solid var(--gold-ring);border-radius:14px;
+  padding:13px 16px;margin:0 20px 16px;font-size:12.5px;color:var(--gold2);
+  line-height:1.5;display:none;align-items:center;gap:12px}
+.hint.show{display:flex}
+
+/* ─── MISC ─── */
+.divider{height:1px;background:var(--line);margin:16px 0}
+.section-header{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;
+  text-transform:uppercase;padding:14px 0 8px}
+select.fi option{background:var(--ink4)}
+.gold{color:var(--gold)}
+.emerald{color:var(--emerald)}
+.ruby{color:var(--ruby)}
+.sapphire{color:var(--sapphire)}
+.serif{font-family:'Cormorant Garamond',serif}
+
+/* ─── PRINT ─── */
+@media print{
+  .nav,.fab,.overlay,.toast-wrap{display:none!important}
+  body{background:#fff;color:#000;overflow:visible}
+  .screen{position:static;display:block!important;overflow:visible;padding:0}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="screens">
+
+<!-- ══ HOME ══ -->
+<div class="screen active" id="s-home">
+  <div style="height:calc(var(--safe-t) + 8px)"></div>
+  <div class="ph">
+    <div>
+      <div class="ph-title" id="greeting">Bonjour</div>
+      <div class="ph-sub" id="greeting-sub">Conformité du Patrimoine</div>
+    </div>
+    <div id="avatar" onclick="openSheet('sh-profil')"
+      style="width:42px;height:42px;border-radius:50%;background:var(--gold-bg);
+      border:1.5px solid var(--gold-ring);display:flex;align-items:center;justify-content:center;
+      font-weight:700;color:var(--gold);font-size:14px;cursor:pointer;letter-spacing:.02em">?</div>
+  </div>
+  <div class="hint" id="install-hint">
+    <span style="font-size:20px;flex-shrink:0">📲</span>
+    <span>Safari → <strong>Partager</strong> → <strong>Sur l'écran d'accueil</strong> pour installer l'app</span>
+  </div>
+  <div class="kpi-grid" id="kpi-home"></div>
+  <div class="sl"><span class="sl-t">Derniers trajets</span><button class="sl-a" onclick="switchScreen('trajets')">Voir tout →</button></div>
+  <div id="home-list"></div>
+</div>
+
+<!-- ══ TRAJETS ══ -->
+<div class="screen" id="s-trajets">
+  <div style="height:calc(var(--safe-t) + 8px)"></div>
+  <div class="ph">
+    <div><div class="ph-title">Trajets</div><div class="ph-sub" id="trajets-sub"></div></div>
+    <button class="ph-action" onclick="openSheet('sh-export')">Exporter</button>
+  </div>
+  <div class="seg" id="seg-mois"></div>
+  <div id="trajets-list"></div>
+</div>
+
+<!-- ══ VERSEMENTS ══ -->
+<div class="screen" id="s-remb">
+  <div style="height:calc(var(--safe-t) + 8px)"></div>
+  <div class="ph">
+    <div><div class="ph-title">Versements</div><div class="ph-sub">Remboursements progressifs</div></div>
+  </div>
+  <div id="remb-content"></div>
+</div>
+
+<!-- ══ STATS ══ -->
+<div class="screen" id="s-stats">
+  <div style="height:calc(var(--safe-t) + 8px)"></div>
+  <div class="ph">
+    <div><div class="ph-title">Statistiques</div><div class="ph-sub" id="stats-sub"></div></div>
+    <select class="fi" id="stats-year" onchange="renderStats()"
+      style="width:auto;padding:7px 12px;font-size:13px;border-radius:var(--r-sm)">
+      <option value="2026">2026</option><option value="2025">2025</option>
+    </select>
+  </div>
+  <div class="chart-card">
+    <div class="chart-ttl"><span style="background:var(--gold)"></span>Kilomètres par mois</div>
+    <canvas id="c-km" height="150"></canvas>
+  </div>
+  <div class="chart-card">
+    <div class="chart-ttl"><span style="background:var(--emerald)"></span>Indemnités (€)</div>
+    <canvas id="c-ind" height="150"></canvas>
+  </div>
+  <div class="pad" style="padding-bottom:8px">
+    <div class="section-header">Récapitulatif</div>
+  </div>
+  <div id="stats-recap" style="margin:0 20px 12px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px"></div>
+  <div class="pad"><div class="section-header">Trajets fréquents</div></div>
+  <div id="stats-freq" style="margin:0 20px 20px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px"></div>
+</div>
+
+<!-- ══ RAPPORT ══ -->
+<div class="screen" id="s-rapport">
+  <div style="height:calc(var(--safe-t) + 8px)"></div>
+  <div class="ph">
+    <div><div class="ph-title">Rapport</div><div class="ph-sub">Note de frais fiscale</div></div>
+  </div>
+  <div class="pad">
+    <div class="fi-row">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Période</label>
+        <select class="fi" id="rap-per" style="padding:10px 12px">
+          <option value="mois">Mois en cours</option>
+          <option value="trim1">T1 — Jan/Mar</option>
+          <option value="trim2">T2 — Avr/Jun</option>
+          <option value="trim3">T3 — Jul/Sep</option>
+          <option value="trim4">T4 — Oct/Déc</option>
+          <option value="annee">Année entière</option>
+        </select>
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Année</label>
+        <select class="fi" id="rap-yr" style="padding:10px 12px">
+          <option value="2026">2026</option><option value="2025">2025</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn btn-gold" style="margin-top:14px;margin-bottom:20px" onclick="genReport()">Générer le rapport</button>
+  </div>
+  <div id="report-out"></div>
+</div>
+
+</div><!-- /screens -->
+
+<!-- ══ NAV BAR ══ -->
+<nav class="nav">
+  <button class="ni active" id="ni-home" onclick="switchScreen('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Accueil
+  </button>
+  <button class="ni" id="ni-trajets" onclick="switchScreen('trajets')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    Trajets
+    <span class="ni-dot" id="dot-trajets"></span>
+  </button>
+  <button class="ni" id="ni-remb" onclick="switchScreen('remb')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+    Versements
+  </button>
+  <button class="ni" id="ni-stats" onclick="switchScreen('stats')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+    Stats
+  </button>
+  <button class="ni" id="ni-rapport" onclick="switchScreen('rapport')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+    Rapport
+  </button>
+</nav>
+</div><!-- /app -->
+
+<button class="fab" id="fab" onclick="openNewTrajet()">+</button>
+
+<!-- ══════════════════════════════════════
+     SHEET: NOUVEAU TRAJET
+══════════════════════════════════════ -->
+<div class="overlay" id="sh-trajet">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title" id="sh-trajet-ttl">Nouveau trajet</div>
+    <button class="sh-close" onclick="closeSheet('sh-trajet')">✕</button>
+  </div>
+  <div class="sb">
+    <div class="fi-row">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Date *</label>
+        <input type="date" class="fi" id="t-date">
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Associé *</label>
+        <select class="fi" id="t-assoc" onchange="calcPreview()"></select>
+      </div>
+    </div>
+
+    <div class="fg-s">
+      <label class="fl">📍 Départ *</label>
+      <div class="favs" id="favs-dep"></div>
+      <div class="ac-wrap gps-wrap">
+        <input type="text" class="fi" id="t-dep" placeholder="Adresse de départ…"
+          autocomplete="off" oninput="acSearch('t-dep','ac-dep','dep')">
+        <button class="gps-btn" id="gps-dep" onclick="useGPS('dep')" title="Ma position">📍</button>
+        <div class="ac-list" id="ac-dep"></div>
+      </div>
+    </div>
+
+    <div class="fg-s">
+      <label class="fl">🏁 Arrivée *</label>
+      <div class="favs" id="favs-arr"></div>
+      <div class="ac-wrap gps-wrap">
+        <input type="text" class="fi" id="t-arr" placeholder="Adresse d'arrivée…"
+          autocomplete="off" oninput="acSearch('t-arr','ac-arr','arr')">
+        <button class="gps-btn" id="gps-arr" onclick="useGPS('arr')" title="Ma position">📍</button>
+        <div class="ac-list" id="ac-arr"></div>
+      </div>
+    </div>
+
+    <button class="route-btn" id="btn-route" onclick="calcRoute()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
+      Calculer la distance automatiquement
+    </button>
+
+    <div class="map-wrap" id="map-wrap"><div id="trip-map"></div></div>
+
+    <div class="calc-box" id="calc-box">Saisissez les km pour voir l'indemnité calculée</div>
+
+    <div class="fg-s">
+      <label class="fl">Motif professionnel *</label>
+      <input type="text" class="fi" id="t-motif" placeholder="ex : Visite chantier client Martin…">
+    </div>
+
+    <div class="fi-row">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Kilomètres</label>
+        <input type="number" class="fi" id="t-km" min="0" step="1" placeholder="0"
+          inputmode="decimal" oninput="calcPreview()">
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Type</label>
+        <select class="fi" id="t-ar" onchange="calcPreview()">
+          <option value="1">Aller simple</option>
+          <option value="2">Aller-retour ×2</option>
+        </select>
+      </div>
+    </div>
+    <div class="fi-row" style="margin-top:14px">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Puissance fiscale</label>
+        <select class="fi" id="t-cv" onchange="calcPreview()">
+          <option value="3">3 CV −</option><option value="4">4 CV</option>
+          <option value="5" selected>5 CV</option><option value="6">6 CV</option>
+          <option value="7">7 CV +</option>
+        </select>
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Véhicule</label>
+        <input type="text" class="fi" id="t-veh" placeholder="AB-123-CD">
+      </div>
+    </div>
+    <div class="fg-s" style="margin-top:14px">
+      <label class="fl">Référence / Notes</label>
+      <input type="text" class="fi" id="t-notes" placeholder="N° chantier, bon de commande…">
+    </div>
+  </div>
+  <div class="sf">
+    <button class="btn btn-gold" onclick="saveTrajet()">Enregistrer le trajet</button>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: DÉTAIL TRAJET
+══════════════════════════════════════ -->
+<div class="overlay" id="sh-detail">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title">Détail</div>
+    <button class="sh-close" onclick="closeSheet('sh-detail')">✕</button>
+  </div>
+  <div class="sb" id="detail-body"></div>
+  <div class="sf" id="detail-foot"></div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: VERSEMENT
+══════════════════════════════════════ -->
+<div class="overlay" id="sh-remb">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title">Enregistrer un versement</div>
+    <button class="sh-close" onclick="closeSheet('sh-remb')">✕</button>
+  </div>
+  <div class="sb">
+    <div class="fi-row">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Associé *</label>
+        <select class="fi" id="r-assoc" onchange="rembPreview()"></select>
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Date *</label>
+        <input type="date" class="fi" id="r-date">
+      </div>
+    </div>
+    <div class="fi-row" style="margin-top:14px">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Montant (€) *</label>
+        <input type="number" class="fi" id="r-amt" min="0" step="0.01"
+          placeholder="0.00" inputmode="decimal" oninput="rembPreview()">
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Mode</label>
+        <select class="fi" id="r-mode">
+          <option>Virement</option><option>Chèque</option><option>Espèces</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg-s" style="margin-top:14px">
+      <label class="fl">Référence</label>
+      <input type="text" class="fi" id="r-ref" placeholder="N° virement ou commentaire">
+    </div>
+    <div class="calc-box" id="remb-prev" style="margin-bottom:14px">Sélectionnez un associé</div>
+    <div class="fg-s">
+      <label class="fl">Appliquer sur ces trajets</label>
+      <div id="remb-trips"
+        style="background:var(--ink4);border:1px solid var(--line2);border-radius:12px;
+        max-height:200px;overflow-y:auto;padding:4px"></div>
+    </div>
+  </div>
+  <div class="sf">
+    <button class="btn btn-gold" onclick="saveRemb()">Enregistrer le versement</button>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: EXPORT
+══════════════════════════════════════ -->
+<div class="overlay" id="sh-export">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title">Exporter</div>
+    <button class="sh-close" onclick="closeSheet('sh-export')">✕</button>
+  </div>
+  <div class="sb">
+    <p style="font-size:13px;color:var(--fg3);margin-bottom:18px;line-height:1.5">
+      Choisissez le format selon votre besoin.</p>
+    <div id="exp-opts">
+      <div class="exp-opt" data-type="backup" onclick="selExp('backup')">
+        <div class="exp-ico">💾</div>
+        <div>
+          <div class="exp-ttl">Sauvegarde complète (JSON)</div>
+          <div class="exp-desc">Toutes vos données dans un fichier. Importez-le pour reprendre exactement où vous en étiez.</div>
+        </div>
+      </div>
+      <div class="exp-opt" data-type="csv" onclick="selExp('csv')">
+        <div class="exp-ico">📊</div>
+        <div>
+          <div class="exp-ttl">Export comptabilité (CSV)</div>
+          <div class="exp-desc">Tableau complet pour votre comptable ou liasse fiscale.</div>
+        </div>
+      </div>
+      <div class="exp-opt" data-type="pdf" onclick="selExp('pdf')">
+        <div class="exp-ico">📋</div>
+        <div>
+          <div class="exp-ttl">Note de frais (PDF)</div>
+          <div class="exp-desc">Document imprimable avec mentions légales DGFiP.</div>
+        </div>
+      </div>
+    </div>
+    <div id="exp-period" style="display:none;margin-top:16px">
+      <div class="fi-row">
+        <div class="fg-s" style="margin-bottom:0">
+          <label class="fl">Période</label>
+          <select class="fi" id="ep-per" style="padding:10px 12px">
+            <option value="tout">Tout</option><option value="mois">Mois en cours</option>
+            <option value="trim1">T1</option><option value="trim2">T2</option>
+            <option value="trim3">T3</option><option value="trim4">T4</option>
+            <option value="annee">Année</option>
+          </select>
+        </div>
+        <div class="fg-s" style="margin-bottom:0">
+          <label class="fl">Année</label>
+          <select class="fi" id="ep-yr" style="padding:10px 12px">
+            <option value="2026">2026</option><option value="2025">2025</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sf">
+    <button class="btn btn-gold" onclick="doExport()">Exporter</button>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════
+     SHEET: PROFIL & PARAMÈTRES
+══════════════════════════════════════ -->
+<div class="overlay" id="sh-profil">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title">Profil & Paramètres</div>
+    <button class="sh-close" onclick="closeSheet('sh-profil')">✕</button>
+  </div>
+  <div class="sb">
+    <div class="section-header">Identité</div>
+    <div class="fi-row">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Prénom *</label>
+        <input type="text" class="fi" id="p-fn" placeholder="Votre prénom">
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Nom *</label>
+        <input type="text" class="fi" id="p-ln" placeholder="Votre nom">
+      </div>
+    </div>
+    <div class="fi-row" style="margin-top:14px">
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">CV fiscal</label>
+        <select class="fi" id="p-cv">
+          <option value="3">3 CV −</option><option value="4">4 CV</option>
+          <option value="5" selected>5 CV</option><option value="6">6 CV</option>
+          <option value="7">7 CV +</option>
+        </select>
+      </div>
+      <div class="fg-s" style="margin-bottom:0">
+        <label class="fl">Immatriculation</label>
+        <input type="text" class="fi" id="p-veh" placeholder="AB-123-CD">
+      </div>
+    </div>
+    <div class="fg-s" style="margin-top:14px">
+      <label class="fl">Société</label>
+      <input type="text" class="fi" id="p-soc" placeholder="Conformité du Patrimoine">
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-header">Calcul automatique — OSRM</div>
+    <div style="background:var(--em-bg);border:1px solid rgba(77,184,135,.2);border-radius:12px;
+      padding:13px 15px;font-size:12.5px;color:var(--emerald);line-height:1.6">
+      ✅ <strong>OSRM / OpenStreetMap</strong> — Itinéraire routier réel, 100 % gratuit,
+      sans inscription, sans clé API. Actif automatiquement.
+    </div>
+
+    <div class="divider"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div class="section-header" style="padding:0">Adresses favorites</div>
+      <button class="btn btn-ink btn-sm" style="padding:7px 12px;font-size:12px;border-radius:8px"
+        onclick="openAddFav()">+ Ajouter</button>
+    </div>
+    <div id="fav-list"></div>
+
+    <div class="divider"></div>
+    <div class="section-header">Données</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
+        onclick="openSheet('sh-export');closeSheet('sh-profil')">📤 Exporter</button>
+      <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
+        onclick="triggerImport()">📥 Importer</button>
+    </div>
+  </div>
+  <div class="sf" style="gap:10px">
+    <button class="btn btn-gold" onclick="saveProfil()">Sauvegarder le profil</button>
+    <button class="btn btn-danger" style="width:100%;padding:12px;border-radius:12px"
+      onclick="clearAll()">Effacer toutes les données</button>
+  </div>
+</div>
+</div>
+
+<!-- ══ ADD FAV SHEET ══ -->
+<div class="overlay" id="sh-fav">
+<div class="sheet">
+  <div class="drag-pill"></div>
+  <div class="sh">
+    <div class="sh-title">Ajouter un favori</div>
+    <button class="sh-close" onclick="closeSheet('sh-fav')">✕</button>
+  </div>
+  <div class="sb">
+    <div class="fg-s">
+      <label class="fl">Libellé *</label>
+      <input type="text" class="fi" id="fav-label" placeholder="ex : Domicile, Siège social…">
+    </div>
+    <div class="fg-s">
+      <label class="fl">Adresse *</label>
+      <input type="text" class="fi" id="fav-addr" placeholder="Adresse complète">
+    </div>
+  </div>
+  <div class="sf">
+    <button class="btn btn-gold" onclick="saveFav()">Ajouter ce favori</button>
+  </div>
+</div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event)">
+
+<style>
+/* Export options styling */
+.exp-opt{display:flex;align-items:center;gap:14px;padding:15px 16px;
+  background:var(--ink4);border:1.5px solid var(--line2);border-radius:var(--r);
+  margin-bottom:10px;cursor:pointer;transition:all .15s}
+.exp-opt:active,.exp-opt.sel{border-color:var(--gold);background:var(--gold-bg)}
+.exp-ico{font-size:28px;flex-shrink:0;line-height:1}
+.exp-ttl{font-size:14px;font-weight:700;color:var(--fg);margin-bottom:3px}
+.exp-desc{font-size:12px;color:var(--fg3);line-height:1.4}
+/* Remb trip checkboxes */
+.rtrip{display:flex;align-items:center;gap:10px;padding:10px 12px;
+  border-bottom:1px solid var(--line);cursor:pointer;font-size:12.5px}
+.rtrip:last-child{border-bottom:none}
+.rtrip input[type=checkbox]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0}
+.rtrip-main{flex:1;line-height:1.4}
+.rtrip-amt{font-weight:700;color:var(--gold);font-size:13px}
+/* Stat rows */
+.stat-r{display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+.stat-r:last-child{border-bottom:none}
+.stat-l{color:var(--fg3);font-weight:500}
+.stat-v{font-weight:700;color:var(--fg)}
+/* Fav list item */
+.fav-item{display:flex;align-items:center;gap:10px;padding:10px 0;
+  border-bottom:1px solid var(--line)}
+.fav-item:last-child{border-bottom:none}
+/* Versement solde bar */
+.sol-bar{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
+  padding:16px;margin:0 20px 12px}
+</style>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════
+// BARÈME DGFIP 2025 (applicable 2026)
+// ═══════════════════════════════════════
+const BAR = {
+  3:{a:.529,b1:.316,b2:1065,c:.370},
+  4:{a:.606,b1:.340,b2:1330,c:.407},
+  5:{a:.636,b1:.357,b2:1395,c:.427},
+  6:{a:.665,b1:.374,b2:1457,c:.447},
+  7:{a:.697,b1:.394,b2:1515,c:.470}
+};
+const CV_L = {3:'3 CV',4:'4 CV',5:'5 CV',6:'6 CV',7:'7 CV+'};
+
+// ═══════════════════════════════════════
+// DB
+// ═══════════════════════════════════════
+let DB = {profil:{favoris:[]}, trips:[], payments:[]};
+function loadDB(){
+  try{ const s=localStorage.getItem('kmpro5'); if(s) DB=JSON.parse(s); }catch(e){}
+  DB.profil = DB.profil||{favoris:[]};
+  DB.profil.favoris = DB.profil.favoris||[];
+  DB.trips = DB.trips||[];
+  DB.payments = DB.payments||[];
+}
+function saveDB(){ localStorage.setItem('kmpro5',JSON.stringify(DB)); }
+
+// ═══════════════════════════════════════
+// CALC
+// ═══════════════════════════════════════
+function indem(kmBase, kmNew, cv){
+  const b=BAR[cv]||BAR[5];
+  let tot=0, rest=kmNew, cur=kmBase;
+  while(rest>0){
+    if(cur<5000){ const d=Math.min(rest,5000-cur); tot+=d*b.a; cur+=d; rest-=d; }
+    else if(cur<20000){ const d=Math.min(rest,20000-cur); if(cur===5000)tot+=b.b2; tot+=d*b.b1; cur+=d; rest-=d; }
+    else{ tot+=rest*b.c; rest=0; }
+  }
+  return +tot.toFixed(2);
+}
+function kmYear(assoc, yr, excl){
+  return DB.trips.filter(t=>t.assoc===assoc && new Date(t.date).getFullYear()===yr && t.id!==excl)
+    .reduce((s,t)=>s+t.kmT,0);
+}
+function soldeDu(assoc){
+  const d=DB.trips.filter(t=>t.assoc===assoc).reduce((s,t)=>s+t.ind,0);
+  const p=DB.payments.filter(p=>p.assoc===assoc).reduce((s,p)=>s+p.amt,0);
+  return +(d-p).toFixed(2);
+}
+
+// ═══════════════════════════════════════
+// PROFIL
+// ═══════════════════════════════════════
+function nameOf(assoc){
+  if(assoc==='me'){ const p=DB.profil; return p.fn&&p.ln?p.fn+' '+p.ln:'Moi'; }
+  return assoc;
+}
+function loadProfil(){
+  const p=DB.profil;
+  setVal('p-fn',p.fn||''); setVal('p-ln',p.ln||'');
+  setVal('p-cv',p.cv||5); setVal('p-veh',p.veh||'');
+  setVal('p-soc',p.soc||'Conformité du Patrimoine');
+  renderFavList(); updateHeader();
+}
+function saveProfil(){
+  DB.profil.fn=getVal('p-fn').trim();
+  DB.profil.ln=getVal('p-ln').trim();
+  DB.profil.cv=parseInt(getVal('p-cv'));
+  DB.profil.veh=getVal('p-veh').trim();
+  DB.profil.soc=getVal('p-soc').trim()||'Conformité du Patrimoine';
+  saveDB(); updateHeader(); prefillTrip();
+  closeSheet('sh-profil'); toast('Profil sauvegardé','ok');
+}
+function updateHeader(){
+  const p=DB.profil;
+  const h=new Date().getHours();
+  const sal = h<5?'Bonsoir': h<12?'Bonjour': h<18?'Bonjour':'Bonsoir';
+  document.getElementById('greeting').textContent = sal+(p.fn?' '+p.fn:'');
+  document.getElementById('greeting-sub').textContent = p.soc||'Conformité du Patrimoine';
+  const av=document.getElementById('avatar');
+  av.textContent = p.fn&&p.ln ? p.fn[0]+p.ln[0] : '?';
+}
+function prefillTrip(){
+  const p=DB.profil;
+  if(p.cv) setVal('t-cv',p.cv);
+  if(p.veh) setVal('t-veh',p.veh);
+}
+function fillSelect(id, withMe=true){
+  const el=document.getElementById(id); if(!el)return;
+  const cur=el.value;
+  const me = withMe && DB.profil.fn
+    ? `<option value="me">${DB.profil.fn} ${DB.profil.ln||''} (moi)</option>` : '';
+  el.innerHTML = (id==='t-assoc'||id==='r-assoc'?'<option value="">— Choisir —</option>':'')
+    + me;
+  el.value = cur||( id==='t-assoc' && DB.profil.fn ? 'me' : '' );
+}
+
+// ═══════════════════════════════════════
+// FAVORIS
+// ═══════════════════════════════════════
+function renderFavList(){
+  const c=document.getElementById('fav-list');
+  const favs=DB.profil.favoris||[];
+  if(!favs.length){ c.innerHTML='<div style="font-size:12px;color:var(--fg3);padding:4px 0">Aucun favori. Ajoutez vos adresses fréquentes.</div>'; return; }
+  c.innerHTML='';
+  favs.forEach((f,i)=>{
+    const d=document.createElement('div');
+    d.className='fav-item';
+    d.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(f.label)}</div><div style="font-size:11px;color:var(--fg3);margin-top:2px">${esc(f.addr)}</div></div>`;
+    const b=document.createElement('button');
+    b.innerHTML='🗑'; b.style.cssText='background:none;border:none;color:var(--ruby);font-size:16px;cursor:pointer;padding:4px 8px';
+    b.addEventListener('click',()=>{ DB.profil.favoris.splice(i,1); saveDB(); renderFavList(); renderFavChips(); });
+    d.appendChild(b); c.appendChild(d);
+  });
+}
+function renderFavChips(){
+  const favs=DB.profil.favoris||[];
+  ['dep','arr'].forEach(f=>{
+    const wrap=document.getElementById('favs-'+f);
+    wrap.innerHTML='';
+    favs.forEach(fav=>{
+      const el=document.createElement('div');
+      el.className='fav-chip';
+      el.innerHTML='⭐ '+esc(fav.label);
+      el.addEventListener('click',()=>applyFav(f,fav.addr));
+      wrap.appendChild(el);
+    });
+  });
+}
+function openAddFav(){ setVal('fav-label',''); setVal('fav-addr',''); openSheet('sh-fav'); }
+function saveFav(){
+  const label=getVal('fav-label').trim(), addr=getVal('fav-addr').trim();
+  if(!label||!addr){ toast('Remplissez le libellé et l\'adresse','err'); return; }
+  DB.profil.favoris.push({label,addr});
+  saveDB(); renderFavList(); renderFavChips();
+  closeSheet('sh-fav'); toast('Favori ajouté ✓','ok');
+}
+async function applyFav(field, addr){
+  const inputId = field==='dep'?'t-dep':'t-arr';
+  document.getElementById(inputId).value = addr;
+  document.getElementById('ac-'+(field==='dep'?'dep':'arr')).classList.remove('show');
+  // Geocode silently
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr)}&format=json&limit=1&countrycodes=fr`);
+    const d=await r.json();
+    if(d[0]) coords[field]={lat:+d[0].lat,lon:+d[0].lon};
+    if(coords.dep&&coords.arr) calcRoute();
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════
+// AUTOCOMPLETE NOMINATIM
+// ═══════════════════════════════════════
+const coords = {dep:null, arr:null};
+const acCache = {};
+let acTimers = {};
+
+async function acSearch(inputId, listId, field){
+  const val = document.getElementById(inputId).value.trim();
+  const list = document.getElementById(listId);
+  clearTimeout(acTimers[field]);
+  if(val.length<3){ list.classList.remove('show'); return; }
+
+  list.innerHTML='<div class="ac-loader">Recherche…</div>';
+  list.classList.add('show');
+
+  acTimers[field] = setTimeout(async()=>{
+    if(acCache[val]){ renderAcList(list, acCache[val], inputId, listId, field); return; }
+    try{
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&addressdetails=1&limit=6&countrycodes=fr&accept-language=fr`,
+        {headers:{'Accept-Language':'fr'}});
+      const data = await r.json();
+      acCache[val] = data;
+      renderAcList(list, data, inputId, listId, field);
+    }catch(e){
+      list.innerHTML='<div class="ac-loader">Erreur réseau — vérifiez votre connexion</div>';
+    }
+  }, 420);
+}
+
+function renderAcList(list, data, inputId, listId, field){
+  if(!data.length){ list.innerHTML='<div class="ac-loader">Aucun résultat</div>'; return; }
+  list.innerHTML='';
+  data.forEach((item,i)=>{
+    const a=item.address||{};
+    const road = a.road||a.pedestrian||a.path||'';
+    const num = a.house_number||'';
+    const city = a.city||a.town||a.village||a.municipality||'';
+    const pc = a.postcode||'';
+    const mainLabel = (num?num+' ':'')+road || item.display_name.split(',')[0];
+    const sub = [pc,city].filter(Boolean).join(' ') || item.display_name.split(',').slice(1,3).join(',').trim();
+    const el = document.createElement('div');
+    el.className='ac-item';
+    el.innerHTML=`<div class="ac-main">${esc(mainLabel)}</div><div class="ac-sub">${esc(sub)}</div>`;
+    el.addEventListener('click',()=>{
+      document.getElementById(inputId).value = item.display_name;
+      list.classList.remove('show');
+      coords[field] = {lat:+item.lat, lon:+item.lon};
+      if(coords.dep&&coords.arr) calcRoute();
+    });
+    list.appendChild(el);
+  });
+}
+
+document.addEventListener('click', e=>{
+  if(!e.target.closest('.ac-wrap')) document.querySelectorAll('.ac-list').forEach(l=>l.classList.remove('show'));
+});
+
+// ═══════════════════════════════════════
+// GPS
+// ═══════════════════════════════════════
+function useGPS(field){
+  if(!navigator.geolocation){ toast('GPS non disponible','err'); return; }
+  const btn=document.getElementById('gps-'+field);
+  btn.classList.add('loading'); btn.style.pointerEvents='none';
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude:lat, longitude:lon} = pos.coords;
+    try{
+      const r=await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=fr`);
+      const d=await r.json();
+      const addr = d.display_name||`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      document.getElementById(field==='dep'?'t-dep':'t-arr').value = addr;
+      coords[field]={lat,lon};
+      if(coords.dep&&coords.arr) calcRoute();
+      toast('Position détectée ✓','ok');
+    }catch(e){
+      document.getElementById(field==='dep'?'t-dep':'t-arr').value=`${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+      coords[field]={lat,lon};
+    }
+    btn.classList.remove('loading'); btn.style.pointerEvents='';
+  }, err=>{
+    btn.classList.remove('loading'); btn.style.pointerEvents='';
+    const m={1:'Accès GPS refusé — activez la localisation',2:'Position indisponible',3:'Délai dépassé'};
+    toast(m[err.code]||'Erreur GPS','err');
+  },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
+}
+
+// ═══════════════════════════════════════
+// CARTE LEAFLET
+// ═══════════════════════════════════════
+let lmap=null, rlayer=null;
+function showMap(cA, cB, routePts){
+  const wrap=document.getElementById('map-wrap');
+  wrap.classList.add('show');
+  if(!lmap){
+    lmap=L.map('trip-map',{zoomControl:false,attributionControl:false});
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(lmap);
+    L.control.zoom({position:'bottomright'}).addTo(lmap);
+    L.control.attribution({position:'bottomleft',prefix:'© OSM'}).addTo(lmap);
+  }else{
+    lmap.eachLayer(l=>{ if(l instanceof L.CircleMarker||l instanceof L.Polyline) lmap.removeLayer(l); });
+  }
+  L.circleMarker([cA.lat,cA.lon],{radius:9,fillColor:'#c8a96e',color:'#fff',weight:2.5,fillOpacity:1}).bindPopup('📍 Départ').addTo(lmap);
+  L.circleMarker([cB.lat,cB.lon],{radius:9,fillColor:'#4db887',color:'#fff',weight:2.5,fillOpacity:1}).bindPopup('🏁 Arrivée').addTo(lmap);
+  if(routePts&&routePts.length>1){
+    rlayer=L.polyline(routePts,{color:'#c8a96e',weight:4,opacity:.9}).addTo(lmap);
+    lmap.fitBounds(rlayer.getBounds(),{padding:[28,28]});
+  }else{
+    rlayer=L.polyline([[cA.lat,cA.lon],[cB.lat,cB.lon]],{color:'#c8a96e',weight:3,opacity:.65,dashArray:'8,5'}).addTo(lmap);
+    lmap.fitBounds(rlayer.getBounds(),{padding:[28,28]});
+  }
+  setTimeout(()=>lmap.invalidateSize(),120);
+}
+function hideMap(){
+  document.getElementById('map-wrap').classList.remove('show');
+  if(lmap){lmap.remove();lmap=null;rlayer=null;}
+}
+
+// ═══════════════════════════════════════
+// CALCUL ROUTE OSRM
+// ═══════════════════════════════════════
+async function calcRoute(){
+  const dep=getVal('t-dep').trim(), arr=getVal('t-arr').trim();
+  if(!dep||!arr){ toast('Renseignez départ et arrivée','err'); return; }
+  const btn=document.getElementById('btn-route');
+  const box=document.getElementById('calc-box');
+  btn.disabled=true;
+  box.className='calc-box loading'; box.textContent='Calcul de l\'itinéraire…';
+
+  // Géocoder si pas de coords
+  for(const [f,val] of [['dep',dep],['arr',arr]]){
+    if(!coords[f]){
+      try{
+        const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=1&countrycodes=fr`);
+        const d=await r.json();
+        if(d[0]) coords[f]={lat:+d[0].lat,lon:+d[0].lon};
+      }catch(e){}
+    }
+  }
+  if(!coords.dep||!coords.arr){ btn.disabled=false; box.className='calc-box'; box.textContent='Adresses non trouvées — saisissez les km manuellement'; return; }
+
+  try{
+    const url=`https://router.project-osrm.org/route/v1/driving/${coords.dep.lon},${coords.dep.lat};${coords.arr.lon},${coords.arr.lat}?overview=full&geometries=geojson`;
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('osrm '+r.status);
+    const data=await r.json();
+    if(data.code!=='Ok') throw new Error('no route');
+    const km=Math.round(data.routes[0].distance/1000);
+    const min=Math.round(data.routes[0].duration/60);
+    setVal('t-km',km);
+    box.className='calc-box';
+    box.innerHTML=`<strong style="color:var(--gold3)">${km} km</strong> · ~${min} min · itinéraire routier réel`;
+    calcPreview();
+    const pts = data.routes[0].geometry?.coordinates?.map(c=>[c[1],c[0]])||null;
+    showMap(coords.dep,coords.arr,pts);
+    toast(`${km} km calculés ✓`,'ok');
+  }catch(e){
+    // Fallback vol d'oiseau ×1.3
+    const R=6371,dLat=(coords.arr.lat-coords.dep.lat)*Math.PI/180,dLon=(coords.arr.lon-coords.dep.lon)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(coords.dep.lat*Math.PI/180)*Math.cos(coords.arr.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+    const km=Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3);
+    setVal('t-km',km);
+    box.className='calc-box';
+    box.innerHTML=`⚠️ <strong>${km} km</strong> estimés (OSRM indisponible — vérifiez)`;
+    calcPreview();
+    showMap(coords.dep,coords.arr,null);
+    toast('Estimation : '+km+' km (vérifiez)','tip');
+  }
+  btn.disabled=false;
+}
+
+// ═══════════════════════════════════════
+// PREVIEW INDEMNITÉ
+// ═══════════════════════════════════════
+function calcPreview(){
+  const km=parseFloat(getVal('t-km'))||0;
+  const ar=parseInt(getVal('t-ar'))||1;
+  const cv=parseInt(getVal('t-cv'))||5;
+  const assoc=getVal('t-assoc');
+  const date=getVal('t-date');
+  const box=document.getElementById('calc-box');
+  if(km===0){ if(!box.textContent.includes('km')) box.textContent='Saisissez les km pour voir l\'indemnité calculée'; return; }
+  const kmT=km*ar;
+  const yr=date?new Date(date).getFullYear():new Date().getFullYear();
+  const base=kmYear(assoc,yr,editId);
+  const ind=indem(base,kmT,cv);
+  const taux=(ind/kmT).toFixed(4);
+  box.className='calc-box';
+  box.innerHTML=`${kmT} km${ar===2?' (×2 AR)':''} · ${taux} €/km · Cumul ${yr} : ${base+kmT} km<span class="calc-big">${ind.toFixed(2)} €</span>`;
+}
+
+// ═══════════════════════════════════════
+// TRAJET CRUD
+// ═══════════════════════════════════════
+let editId=null;
+function openNewTrajet(){
+  editId=null;
+  document.getElementById('sh-trajet-ttl').textContent='Nouveau trajet';
+  setVal('t-date',new Date().toISOString().slice(0,10));
+  ['t-dep','t-arr','t-motif','t-notes'].forEach(id=>setVal(id,''));
+  setVal('t-km',''); setVal('t-ar','1');
+  fillSelect('t-assoc');
+  prefillTrip();
+  renderFavChips();
+  document.getElementById('calc-box').className='calc-box';
+  document.getElementById('calc-box').textContent='Saisissez les km pour voir l\'indemnité calculée';
+  hideMap();
+  coords.dep=null; coords.arr=null;
+  openSheet('sh-trajet');
+}
+function saveTrajet(){
+  const assoc=getVal('t-assoc'), date=getVal('t-date');
+  const dep=getVal('t-dep').trim(), arr=getVal('t-arr').trim();
+  const motif=getVal('t-motif').trim();
+  const km=parseFloat(getVal('t-km'))||0;
+  const ar=parseInt(getVal('t-ar'))||1;
+  const cv=parseInt(getVal('t-cv'))||5;
+  const veh=getVal('t-veh').trim(), notes=getVal('t-notes').trim();
+  if(!assoc||!date||!dep||!arr||!motif) return toast('Champs obligatoires manquants','err');
+  if(km<=0) return toast('Saisissez les kilomètres','err');
+  const yr=new Date(date).getFullYear(), kmT=km*ar;
+  const base=kmYear(assoc,yr,editId);
+  const ind=indem(base,kmT,cv);
+  if(editId){
+    const i=DB.trips.findIndex(t=>t.id===editId);
+    if(i>-1) DB.trips[i]={...DB.trips[i],assoc,date,dep,arr,motif,km,ar,kmT,cv,veh,notes,ind};
+    toast('Trajet modifié ✓','ok'); editId=null;
+  }else{
+    DB.trips.push({id:uid(),assoc,date,dep,arr,motif,km,ar,kmT,cv,veh,notes,ind,status:'wait',paid:0});
+    toast('Trajet enregistré ✓','ok');
+  }
+  saveDB(); closeSheet('sh-trajet'); renderAll();
+}
+function openDetail(id){
+  const t=DB.trips.find(x=>x.id===id); if(!t)return;
+  const reste=+(t.ind-(t.paid||0)).toFixed(2);
+  document.getElementById('detail-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:16px;font-weight:700;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis">${esc(t.dep.split(',')[0])}</div>
+        <div style="font-size:11px;color:var(--fg3);margin-bottom:5px">↓ vers</div>
+        <div style="font-size:16px;font-weight:700;overflow:hidden;text-overflow:ellipsis">${esc(t.arr.split(',')[0])}</div>
+      </div>
+      <div style="text-align:right;margin-left:16px;flex-shrink:0">
+        <div class="serif" style="font-size:32px;font-weight:600;color:var(--gold)">${t.ind.toFixed(2)} €</div>
+        <div style="margin-top:4px">${badge(t.status)}</div>
+      </div>
+    </div>
+    <div style="background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px">
+      ${dr('Date',t.date)}${dr('Associé',nameOf(t.assoc))}${dr('Motif',t.motif)}
+      ${dr('Km',t.km+' km × '+t.ar+(t.ar===2?' (AR)':'')+' = '+t.kmT+' km')}
+      ${dr('Puissance',CV_L[t.cv])}${t.veh?dr('Véhicule',t.veh):''}
+      ${t.notes?dr('Notes',t.notes):''}
+      ${dr('Remboursé',(t.paid||0).toFixed(2)+' €')}
+      ${dr('Reste dû',`<span class="${reste>0?'ruby':'emerald'}">${reste.toFixed(2)} €</span>`)}
+    </div>`;
+  const foot=document.getElementById('detail-foot');
+  foot.innerHTML='<div style="display:flex;gap:10px"><button class="btn btn-ink" id="d-edit" style="flex:1;padding:12px">✏️ Modifier</button><button class="btn btn-danger" id="d-del" style="flex:1;padding:12px;border-radius:12px">🗑 Supprimer</button></div>';
+  foot.querySelector('#d-edit').addEventListener('click',()=>editTrip(id));
+  foot.querySelector('#d-del').addEventListener('click',()=>delTrip(id));
+  openSheet('sh-detail');
+}
+function editTrip(id){
+  const t=DB.trips.find(x=>x.id===id); if(!t)return;
+  editId=id; closeSheet('sh-detail');
+  setTimeout(()=>{
+    document.getElementById('sh-trajet-ttl').textContent='Modifier le trajet';
+    fillSelect('t-assoc'); renderFavChips();
+    setVal('t-assoc',t.assoc); setVal('t-date',t.date);
+    setVal('t-dep',t.dep); setVal('t-arr',t.arr);
+    setVal('t-motif',t.motif); setVal('t-km',t.km);
+    setVal('t-ar',t.ar); setVal('t-cv',t.cv);
+    setVal('t-veh',t.veh||''); setVal('t-notes',t.notes||'');
+    coords.dep=null; coords.arr=null;
+    hideMap(); calcPreview();
+    openSheet('sh-trajet');
+  },320);
+}
+function delTrip(id){
+  if(!confirm('Supprimer ce trajet ?')) return;
+  DB.trips=DB.trips.filter(t=>t.id!==id);
+  saveDB(); closeSheet('sh-detail'); renderAll();
+  toast('Trajet supprimé','tip');
+}
+
+// ═══════════════════════════════════════
+// RENDER FUNCTIONS
+// ═══════════════════════════════════════
+function renderAll(){
+  renderKPIs(); renderHome(); renderTrips(); renderRemb(); renderDot(); updateHeader();
+}
+function renderKPIs(){
+  const yr=new Date().getFullYear();
+  const kmY=DB.trips.filter(t=>new Date(t.date).getFullYear()===yr).reduce((s,t)=>s+t.kmT,0);
+  const totDu=+DB.trips.reduce((s,t)=>s+t.ind,0).toFixed(2);
+  const totPaid=+DB.payments.reduce((s,p)=>s+p.amt,0).toFixed(2);
+  const sol=+(totDu-totPaid).toFixed(2);
+  document.getElementById('kpi-home').innerHTML=`
+    <div class="kpi c-gold"><div class="kpi-l">Km ${yr}</div><div class="kpi-v">${kmY.toLocaleString('fr-FR')}<span class="kpi-u"> km</span></div><div class="kpi-s">${DB.trips.length} trajet(s)</div></div>
+    <div class="kpi ${sol>0?'c-ruby':'c-em'}"><div class="kpi-l">Solde dû</div><div class="kpi-v">${Math.abs(sol).toLocaleString('fr-FR',{minimumFractionDigits:2})}<span class="kpi-u"> €</span></div><div class="kpi-s">${sol>0?'À percevoir':'✓ À jour'}</div></div>
+    <div class="kpi c-em"><div class="kpi-l">Total dû</div><div class="kpi-v">${totDu.toLocaleString('fr-FR',{minimumFractionDigits:2})}<span class="kpi-u"> €</span></div><div class="kpi-s">Barème 2025</div></div>
+    <div class="kpi c-sap"><div class="kpi-l">Remboursé</div><div class="kpi-v">${totPaid.toLocaleString('fr-FR',{minimumFractionDigits:2})}<span class="kpi-u"> €</span></div><div class="kpi-s">${DB.payments.length} versement(s)</div></div>`;
+}
+function renderHome(){
+  const c=document.getElementById('home-list');
+  const list=[...DB.trips].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  if(!list.length){ c.innerHTML=`<div class="empty"><div class="empty-ico">🚗</div><h3>Aucun trajet</h3><p>Appuyez sur + pour enregistrer votre premier déplacement professionnel</p></div>`; return; }
+  c.innerHTML='';
+  list.forEach(t=>{ const el=mkTripCard(t); c.appendChild(el); });
+}
+function renderTrips(){
+  // Segment mois
+  const mSet=new Set();
+  const now=new Date();
+  for(let i=0;i<6;i++){ const d=new Date(now.getFullYear(),now.getMonth()-i,1); mSet.add(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }
+  DB.trips.forEach(t=>mSet.add(t.date.slice(0,7)));
+  const months=[...mSet].sort().reverse().slice(0,6);
+  if(!activeMois||!months.includes(activeMois)) activeMois=null;
+  const ML={'01':'Jan','02':'Fév','03':'Mar','04':'Avr','05':'Mai','06':'Jun','07':'Jul','08':'Aoû','09':'Sep','10':'Oct','11':'Nov','12':'Déc'};
+  const seg=document.getElementById('seg-mois');
+  seg.innerHTML=`<button class="seg-b ${!activeMois?'active':''}" data-m="">Tout</button>`
+    +months.map(m=>{const[y,mo]=m.split('-');return`<button class="seg-b ${activeMois===m?'active':''}" data-m="${m}">${ML[mo]} ${y.slice(2)}</button>`;}).join('');
+  seg.querySelectorAll('.seg-b').forEach(b=>b.addEventListener('click',()=>{activeMois=b.dataset.m||null;renderTrips();}));
+
+  let trips=[...DB.trips].sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(activeMois) trips=trips.filter(t=>t.date.startsWith(activeMois));
+  const tkm=trips.reduce((s,t)=>s+t.kmT,0), tind=trips.reduce((s,t)=>s+t.ind,0);
+  document.getElementById('trajets-sub').textContent=`${trips.length} trajet(s) · ${tkm} km · ${tind.toFixed(2)} €`;
+  const list=document.getElementById('trajets-list');
+  if(!trips.length){ list.innerHTML=`<div class="empty"><div class="empty-ico">🗺️</div><h3>Aucun trajet</h3><p>Appuyez sur + pour ajouter un trajet</p></div>`; return; }
+  list.innerHTML='';
+  trips.forEach(t=>{ const el=mkTripCard(t); list.appendChild(el); });
+}
+function mkTripCard(t){
+  const el=document.createElement('div');
+  el.className='tc';
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div style="flex:1;min-width:0">
+        <div class="tc-route">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</div>
+        <div class="tc-meta">${t.date} · ${t.kmT} km · ${nameOf(t.assoc)}</div>
+        <div style="margin-top:8px">${badge(t.status)}</div>
+      </div>
+      <div style="margin-left:14px;text-align:right;flex-shrink:0">
+        <div class="tc-amount">${t.ind.toFixed(2)} €</div>
+        ${t.paid>0&&t.status!=='done'?`<div class="tc-paid">+${t.paid.toFixed(2)} € reçu</div>`:''}
+      </div>
+    </div>`;
+  el.addEventListener('click',()=>openDetail(t.id));
+  return el;
+}
+function renderRemb(){
+  const totDu=+DB.trips.reduce((s,t)=>s+t.ind,0).toFixed(2);
+  const totPaid=+DB.payments.reduce((s,p)=>s+p.amt,0).toFixed(2);
+  const sol=+(totDu-totPaid).toFixed(2);
+  const pct=totDu>0?Math.round(totPaid/totDu*100):100;
+  const c=document.getElementById('remb-content');
+  let html=`
+    <div class="sol-bar">
+      <div style="display:flex;justify-content:space-between;margin-bottom:14px">
+        <div><div style="font-size:10px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Total dû</div>
+          <div class="serif" style="font-size:26px;font-weight:600">${totDu.toFixed(2)} €</div></div>
+        <div style="text-align:right"><div style="font-size:10px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Remboursé</div>
+          <div class="serif" style="font-size:26px;font-weight:600;color:var(--emerald)">${totPaid.toFixed(2)} €</div></div>
+      </div>
+      <div class="prog-wrap" style="height:6px"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:11px;font-weight:600">
+        <span style="color:var(--fg3)">${pct}% remboursé</span>
+        <span style="color:${sol>0?'var(--ruby)':'var(--emerald)'}">Solde : ${sol.toFixed(2)} €</span>
+      </div>
+    </div>
+    <div style="padding:0 20px 16px">
+      <button class="btn btn-gold" onclick="openRembSheet()">Enregistrer un versement</button>
+    </div>`;
+  if(!DB.payments.length){
+    html+=`<div class="empty"><div class="empty-ico">💸</div><h3>Aucun versement</h3><p>Enregistrez vos remboursements progressifs ici</p></div>`;
+  }else{
+    html+=`<div style="padding:0 20px 8px"><div style="font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Historique</div></div>`;
+    html+=[...DB.payments].sort((a,b)=>new Date(b.date)-new Date(a.date)).map(p=>`
+      <div class="remb-card">
+        <div class="remb-top">
+          <div><div style="font-size:14px;font-weight:700">${nameOf(p.assoc)}</div>
+            <div style="font-size:11.5px;color:var(--fg3);margin-top:3px">${p.date} · ${p.mode}${p.ref?' · '+esc(p.ref):''}</div>
+          </div>
+          <div class="rh-amount">+${p.amt.toFixed(2)} €</div>
+        </div>
+      </div>`).join('');
+  }
+  c.innerHTML=html;
+}
+function renderDot(){
+  const n=DB.trips.filter(t=>t.status==='wait').length;
+  const d=document.getElementById('dot-trajets');
+  d.style.display=n>0?'block':'none';
+}
+
+// ═══════════════════════════════════════
+// VERSEMENTS
+// ═══════════════════════════════════════
+function openRembSheet(){
+  fillSelect('r-assoc');
+  setVal('r-date',new Date().toISOString().slice(0,10));
+  setVal('r-amt',''); setVal('r-ref','');
+  rembPreview();
+  openSheet('sh-remb');
+}
+function rembPreview(){
+  const assoc=getVal('r-assoc'), amt=parseFloat(getVal('r-amt'))||0;
+  const box=document.getElementById('remb-prev');
+  if(!assoc){ box.textContent='Sélectionnez un associé'; renderRembTrips(''); return; }
+  const sol=soldeDu(assoc);
+  box.innerHTML=`Solde dû : <strong style="color:var(--gold2)">${sol.toFixed(2)} €</strong> · Vous versez : <strong style="color:var(--emerald)">${amt.toFixed(2)} €</strong> · Restera : <strong>${Math.max(0,sol-amt).toFixed(2)} €</strong>`;
+  renderRembTrips(assoc);
+}
+function renderRembTrips(assoc){
+  const c=document.getElementById('remb-trips');
+  const trips=DB.trips.filter(t=>(!assoc||t.assoc===assoc)&&t.status!=='done').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!trips.length){ c.innerHTML='<div style="padding:12px;font-size:12px;color:var(--fg3);text-align:center">Aucun trajet en attente</div>'; return; }
+  c.innerHTML='';
+  trips.forEach(t=>{
+    const reste=+(t.ind-(t.paid||0)).toFixed(2);
+    const d=document.createElement('div');
+    d.className='rtrip';
+    d.innerHTML=`<input type="checkbox" name="rt" value="${t.id}">
+      <div class="rtrip-main"><strong>${t.date}</strong><br><span style="color:var(--fg3)">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</span></div>
+      <span class="rtrip-amt">${reste.toFixed(2)} €</span>`;
+    c.appendChild(d);
+  });
+}
+function saveRemb(){
+  const assoc=getVal('r-assoc'), date=getVal('r-date');
+  const amt=parseFloat(getVal('r-amt')), mode=getVal('r-mode'), ref=getVal('r-ref').trim();
+  if(!assoc||!date||!amt||amt<=0) return toast('Champs obligatoires manquants','err');
+  const tripIds=[...document.querySelectorAll('[name="rt"]:checked')].map(e=>e.value);
+  DB.payments.push({id:uid(),assoc,date,amt,mode,ref,tripIds,at:new Date().toISOString()});
+  const targets = tripIds.length
+    ? tripIds.map(id=>DB.trips.find(t=>t.id===id)).filter(Boolean)
+    : DB.trips.filter(t=>t.assoc===assoc&&t.status!=='done').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  let rest=amt;
+  for(const t of targets){
+    if(rest<=0) break;
+    const dispo=+(t.ind-(t.paid||0)).toFixed(2);
+    const pay=Math.min(dispo,rest);
+    t.paid=+((t.paid||0)+pay).toFixed(2);
+    rest=+(rest-pay).toFixed(2);
+    t.status = t.paid>=t.ind-.01 ? 'done' : 'part';
+  }
+  saveDB(); closeSheet('sh-remb'); renderAll();
+  toast(`${amt.toFixed(2)} € enregistré ✓`,'ok');
+}
+
+// ═══════════════════════════════════════
+// STATISTIQUES
+// ═══════════════════════════════════════
+let cKm=null, cInd=null;
+let activeMois=null;
+function renderStats(){
+  const yr=parseInt(getVal('stats-year'))||2026;
+  const now=new Date(), maxM= yr===now.getFullYear() ? now.getMonth() : 11;
+  const ML=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  const kmM=new Array(12).fill(0), indM=new Array(12).fill(0), nM=new Array(12).fill(0);
+  DB.trips.filter(t=>new Date(t.date).getFullYear()===yr).forEach(t=>{
+    const m=new Date(t.date).getMonth(); kmM[m]+=t.kmT; indM[m]+=t.ind; nM[m]++;
+  });
+  const labels=ML.slice(0,maxM+1), kmD=kmM.slice(0,maxM+1), indD=indM.slice(0,maxM+1).map(v=>+v.toFixed(2));
+  const chartDef = (type,data,color,unit)=>({
+    type, data:{labels,datasets:[{data,backgroundColor:type==='bar'?color+'99':color+'22',borderColor:color,borderWidth:2,borderRadius:type==='bar'?6:0,fill:type==='line',tension:.35,pointBackgroundColor:color,pointRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} ${unit}`}}},
+      scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5260',font:{size:10,family:'Plus Jakarta Sans'}}},
+              y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5260',font:{size:10,family:'Plus Jakarta Sans'}},beginAtZero:true}}}
+  });
+  if(cKm){cKm.destroy();} cKm=new Chart(document.getElementById('c-km'),chartDef('bar',kmD,'#c8a96e','km'));
+  if(cInd){cInd.destroy();} cInd=new Chart(document.getElementById('c-ind'),chartDef('line',indD,'#4db887','€'));
+
+  const totKm=kmM.reduce((s,v)=>s+v,0), totInd=+indM.reduce((s,v)=>s+v,0).toFixed(2);
+  const totPaid=+DB.payments.filter(p=>new Date(p.date).getFullYear()===yr).reduce((s,p)=>s+p.amt,0).toFixed(2);
+  const nb=DB.trips.filter(t=>new Date(t.date).getFullYear()===yr).length;
+  const actif=kmM.filter(v=>v>0).length, moy=actif>0?Math.round(totKm/actif):0;
+  document.getElementById('stats-recap').innerHTML=`
+    ${sr('Km totaux',totKm.toLocaleString('fr-FR')+' km')}
+    ${sr('Indemnités dues','<span class="gold">'+totInd.toFixed(2)+' €</span>')}
+    ${sr('Remboursé','<span class="emerald">'+totPaid.toFixed(2)+' €</span>')}
+    ${sr('Solde restant','<span class="'+(totInd-totPaid>0?'ruby':'emerald')+'">'+(totInd-totPaid).toFixed(2)+' €</span>')}
+    ${sr('Nb trajets',nb)}
+    ${sr('Moy km/mois actif',moy+' km')}`;
+
+  const freq={};
+  DB.trips.filter(t=>new Date(t.date).getFullYear()===yr).forEach(t=>{
+    const k=`${t.dep.split(',')[0].trim()} → ${t.arr.split(',')[0].trim()}`;
+    freq[k]=freq[k]||{n:0,km:0,ind:0};
+    freq[k].n++; freq[k].km+=t.kmT; freq[k].ind+=t.ind;
+  });
+  const top=Object.entries(freq).sort((a,b)=>b[1].n-a[1].n).slice(0,5);
+  document.getElementById('stats-freq').innerHTML = top.length
+    ? top.map(([r,d])=>sr(esc(r),`<span style="color:var(--fg3);font-size:11px">${d.n}× · ${d.km} km · ${d.ind.toFixed(2)} €</span>`)).join('')
+    : '<div style="font-size:12px;color:var(--fg3);padding:12px 0">Aucun trajet cette année</div>';
+  document.getElementById('stats-sub').textContent=`${yr} · ${nb} trajet(s) · ${totKm} km`;
+}
+
+// ═══════════════════════════════════════
+// RAPPORT
+// ═══════════════════════════════════════
+function genReport(){
+  const per=getVal('rap-per'), yr=parseInt(getVal('rap-yr'));
+  let mD=1,mF=12;
+  if(per==='mois'){const n=new Date();mD=mF=n.getMonth()+1;}
+  if(per==='trim1'){mD=1;mF=3;} if(per==='trim2'){mD=4;mF=6;}
+  if(per==='trim3'){mD=7;mF=9;} if(per==='trim4'){mD=10;mF=12;}
+  const trips=DB.trips.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()+1>=mD&&d.getMonth()+1<=mF;}).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const pL={mois:'Mois en cours',trim1:`T1 ${yr}`,trim2:`T2 ${yr}`,trim3:`T3 ${yr}`,trim4:`T4 ${yr}`,annee:`Année ${yr}`}[per];
+  const p=DB.profil, totKm=trips.reduce((s,t)=>s+t.kmT,0), totInd=+trips.reduce((s,t)=>s+t.ind,0).toFixed(2);
+  const out=document.getElementById('report-out');
+  if(!trips.length){ out.innerHTML=`<div class="empty"><div class="empty-ico">📭</div><h3>Aucun trajet</h3><p>Aucun trajet pour cette période</p></div>`; return; }
+
+  let html=`<div style="margin:0 20px 12px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:20px">
+    <div class="serif" style="font-size:22px;font-weight:600;margin-bottom:6px">Note de frais kilométriques</div>
+    <div style="font-size:12px;color:var(--fg3);line-height:1.7">${esc(p.soc||'Conformité du Patrimoine')}<br>Période : ${pL} · ${esc((p.fn||'')+' '+(p.ln||''))}</div>
+    <div style="display:flex;gap:12px;margin-top:16px">
+      <div class="kpi c-gold" style="flex:1;padding:14px"><div class="kpi-l">Km</div><div class="kpi-v">${totKm}<span class="kpi-u"> km</span></div></div>
+      <div class="kpi c-em" style="flex:1;padding:14px"><div class="kpi-l">Indemnités</div><div class="kpi-v">${totInd.toFixed(2)}<span class="kpi-u"> €</span></div></div>
+    </div>
+  </div>
+  <div style="padding:0 20px 8px"><div style="font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Détail des trajets</div></div>`;
+
+  trips.forEach(t=>{
+    html+=`<div style="margin:0 20px 8px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px">
+      ${dr('Date',t.date)}${dr('Trajet',esc(t.dep.split(',').slice(0,2).join(','))+'<br><span style="color:var(--fg3)">→ '+esc(t.arr.split(',').slice(0,2).join(','))+'</span>')}
+      ${dr('Motif',esc(t.motif))}${dr('Km',t.kmT+' km ('+CV_L[t.cv]+')')}
+      ${dr('Indemnité','<strong style="color:var(--gold)">'+t.ind.toFixed(2)+' €</strong>')}
+      ${dr('Statut',badge(t.status))}
+    </div>`;
+  });
+
+  html+=`<div style="margin:0 20px 16px;background:var(--gold-bg);border:1px solid var(--gold-ring);border-radius:var(--r);padding:14px 16px">
+    <div style="font-size:11.5px;color:var(--gold2);line-height:1.7">
+      <strong>Barème DGFiP 2025 — BOI-BAREME-000001</strong><br>
+      Indemnités calculées conformément à l'arrêté du 27 mars 2025. Frais professionnels réels déductibles du résultat imposable. Document généré le ${new Date().toLocaleDateString('fr-FR')}.
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;padding:0 20px 20px">
+    <button class="btn btn-ink" id="btn-share" style="flex:1;padding:12px">📤 Partager</button>
+    <button class="btn btn-gold" onclick="window.print()" style="flex:1">🖨️ Imprimer PDF</button>
+  </div>`;
+
+  out.innerHTML=html;
+  out.querySelector('#btn-share')?.addEventListener('click',()=>{
+    const txt=`Note de frais KM — ${pL}\n${p.fn||''} ${p.ln||''} · ${p.soc||''}\n${totKm} km · ${totInd.toFixed(2)} €\n(Barème DGFiP 2025)`;
+    navigator.share?navigator.share({title:'Note de frais KM',text:txt}):(navigator.clipboard?.writeText(txt),toast('Copié ✓','tip'));
+  });
+  toast('Rapport généré ✓','ok');
+}
+
+// ═══════════════════════════════════════
+// EXPORT / IMPORT
+// ═══════════════════════════════════════
+let selExpType='backup';
+function selExp(type){
+  selExpType=type;
+  document.querySelectorAll('.exp-opt').forEach(el=>el.classList.toggle('sel',el.dataset.type===type));
+  document.getElementById('exp-period').style.display=type==='backup'?'none':'block';
+}
+function doExport(){
+  if(selExpType==='backup') exportJSON();
+  else if(selExpType==='csv') exportCSV();
+  else{ closeSheet('sh-export'); switchScreen('rapport'); setTimeout(()=>{genReport();setTimeout(()=>window.print(),400)},300); }
+}
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=`km-pro-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  closeSheet('sh-export'); toast('Sauvegarde exportée ✓','ok');
+}
+function exportCSV(){
+  const {ts}=getFilteredTrips();
+  if(!ts.length){ toast('Aucun trajet pour cette période','err'); return; }
+  const h=['Date','Associé','Départ','Arrivée','Motif','Km aller','Type','Km total','CV','Véhicule','Indemnité €','Remboursé €','Reste €','Statut','Notes'];
+  const rows=ts.map(t=>[t.date,nameOf(t.assoc),`"${t.dep}"`,`"${t.arr}"`,`"${t.motif}"`,t.km,t.ar===2?'AR':'Simple',t.kmT,CV_L[t.cv],t.veh||'',t.ind.toFixed(2),(t.paid||0).toFixed(2),(t.ind-(t.paid||0)).toFixed(2),t.status,`"${t.notes||''}"`]);
+  const csv=[h,...rows].map(r=>r.join(';')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=`km-pro-compta-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  closeSheet('sh-export'); toast('CSV exporté ✓','ok');
+}
+function getFilteredTrips(){
+  const per=getVal('ep-per')||'tout', yr=parseInt(getVal('ep-yr')||new Date().getFullYear());
+  let mD=1,mF=12;
+  if(per==='mois'){const n=new Date();mD=mF=n.getMonth()+1;}
+  if(per==='trim1'){mD=1;mF=3;} if(per==='trim2'){mD=4;mF=6;}
+  if(per==='trim3'){mD=7;mF=9;} if(per==='trim4'){mD=10;mF=12;}
+  let ts=DB.trips;
+  if(per!=='tout') ts=ts.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()+1>=mD&&d.getMonth()+1<=mF;});
+  return{ts:ts.sort((a,b)=>new Date(a.date)-new Date(b.date))};
+}
+function triggerImport(){ document.getElementById('file-import').click(); }
+function doImport(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const imp=JSON.parse(ev.target.result);
+      if(!confirm(`Importer ${imp.trips?.length||0} trajets et ${imp.payments?.length||0} versements ? (fusion)`)) return;
+      if(imp.trips){ const ex=new Set(DB.trips.map(t=>t.id)); imp.trips.forEach(t=>{if(!ex.has(t.id))DB.trips.push(t);}); }
+      if(imp.payments){ const ex=new Set(DB.payments.map(p=>p.id)); imp.payments.forEach(p=>{if(!ex.has(p.id))DB.payments.push(p);}); }
+      saveDB(); renderAll(); closeSheet('sh-profil'); toast('Import réussi ✓','ok');
+    }catch{ toast('Fichier JSON invalide','err'); }
+  };
+  reader.readAsText(file); e.target.value='';
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function switchScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('s-'+name)?.classList.add('active');
+  document.getElementById('ni-'+name)?.classList.add('active');
+  const fabMap = {home:openNewTrajet,trajets:openNewTrajet,remb:openRembSheet,stats:()=>renderStats(),rapport:genReport};
+  const fabLbl = {home:'+',trajets:'+',remb:'€',stats:'📈',rapport:'📋'};
+  const fab=document.getElementById('fab');
+  fab.textContent=fabLbl[name]||'+';
+  fab.onclick=fabMap[name]||openNewTrajet;
+  if(name==='stats') setTimeout(renderStats,80);
+}
+
+// ═══════════════════════════════════════
+// SHEETS
+// ═══════════════════════════════════════
+function openSheet(id){ document.getElementById(id).classList.add('open'); document.body.style.overflow='hidden'; }
+function closeSheet(id){
+  document.getElementById(id).classList.remove('open'); document.body.style.overflow='';
+  if(id==='sh-trajet') hideMap();
+}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{ if(e.target===el) closeSheet(el.id); }));
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function badge(s){ const m={wait:['b-wait','⏳ En attente'],part:['b-part','◑ Partiel'],done:['b-done','✓ Remboursé']};const[cls,lbl]=m[s]||['b-wait','?'];return`<span class="badge ${cls}">${lbl}</span>`; }
+function dr(l,v){ return `<div class="dr"><span class="dr-l">${l}</span><span class="dr-v">${v}</span></div>`; }
+function sr(l,v){ return `<div class="stat-r"><span class="stat-l">${l}</span><span class="stat-v">${v}</span></div>`; }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2); }
+function getVal(id){ const el=document.getElementById(id); return el?el.value:''; }
+function setVal(id,v){ const el=document.getElementById(id); if(el) el.value=v; }
+function clearAll(){
+  if(!confirm('Effacer tous les trajets et versements ?')) return;
+  DB.trips=[]; DB.payments=[]; saveDB(); renderAll(); toast('Données effacées','tip');
+}
+function toast(msg,type='tip'){
+  const wrap=document.getElementById('toasts');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span>${{ok:'✓',err:'✗',tip:'ℹ'}[type]||'ℹ'}</span>${msg}`;
+  wrap.appendChild(el);
+  setTimeout(()=>{ el.style.transition='.3s'; el.style.opacity='0'; el.style.transform='translateY(-8px)'; setTimeout(()=>el.remove(),300); }, 3200);
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  loadDB(); loadProfil(); renderAll(); selExp('backup');
+  // iOS install hint
+  if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone)
+    document.getElementById('install-hint').classList.add('show');
+  // Premier lancement — ouvrir profil
+  if(!DB.profil.fn) setTimeout(()=>openSheet('sh-profil'),800);
+});
+</script>
+</body>
+</html>
