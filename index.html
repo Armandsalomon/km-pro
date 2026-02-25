@@ -858,15 +858,9 @@ select.fi option{background:var(--ink4)}
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
         onclick="openSheet('sh-export');closeSheet('sh-profil')">📤 Exporter mes données</button>
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
-        onclick="triggerImport('self')">📥 Restaurer sauvegarde</button>
+        onclick="triggerImport()">📥 Importer des données</button>
     </div>
-    <button class="btn btn-em" style="width:100%;padding:12px;font-size:13px;border-radius:12px;margin-bottom:10px"
-      onclick="triggerImport('assoc')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      Importer données d'un associé
-    </button>
-    <button class="btn btn-ink" style="width:100%;padding:11px;font-size:13px;border-radius:12px"
-      onclick="changePIN()">🔒 Modifier le code PIN</button>
+
   </div>
   <div class="sf" style="gap:10px">
     <button class="btn btn-gold" onclick="saveProfil()">Sauvegarder le profil</button>
@@ -921,8 +915,7 @@ select.fi option{background:var(--ink4)}
 
 <div class="toast-wrap" id="toasts"></div>
 <div id="print-doc" style="display:none"></div>
-<input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event,'self')">
-<input type="file" id="file-import-assoc" accept=".json" style="display:none" onchange="doImport(event,'assoc')">
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event)">
 
 <style>
 /* Export options styling */
@@ -1385,7 +1378,7 @@ function openDetail(id){
       </div>
     </div>
     <div style="background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px">
-      ${dr('Date',t.date)}${dr('Associé',nameOf(t.assoc))}${dr('Motif',t.motif)}
+      ${dr('Date',fmtDate(t.date))}${dr('Associé',nameOf(t.assoc))}${dr('Motif',t.motif)}
       ${dr('Km',t.km+' km × '+t.ar+(t.ar===2?' (AR)':'')+' = '+t.kmT+' km')}
       ${dr('Puissance',CV_L[t.cv])}${t.veh?dr('Véhicule',t.veh):''}
       ${t.notes?dr('Notes',t.notes):''}
@@ -1476,7 +1469,7 @@ function mkTripCard(t){
     <div style="display:flex;justify-content:space-between;align-items:flex-start">
       <div style="flex:1;min-width:0">
         <div class="tc-route">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</div>
-        <div class="tc-meta">${t.date} · ${t.kmT} km · ${nameOf(t.assoc)}</div>
+        <div class="tc-meta">${fmtDate(t.date)} · ${t.kmT} km · ${nameOf(t.assoc)}</div>
         <div style="margin-top:8px">${badge(t.status)}</div>
       </div>
       <div style="margin-left:14px;text-align:right;flex-shrink:0">
@@ -1518,7 +1511,7 @@ function renderRemb(){
       <div class="remb-card">
         <div class="remb-top">
           <div><div style="font-size:14px;font-weight:700">${nameOf(p.assoc)}</div>
-            <div style="font-size:11.5px;color:var(--fg3);margin-top:3px">${p.date} · ${p.mode}${p.ref?' · '+esc(p.ref):''}</div>
+            <div style="font-size:11.5px;color:var(--fg3);margin-top:3px">${fmtDate(p.date)} · ${p.mode}${p.ref?' · '+esc(p.ref):''}</div>
           </div>
           <div class="rh-amount">+${p.amt.toFixed(2)} €</div>
         </div>
@@ -1572,7 +1565,7 @@ function renderRembTrips(assoc){
     d.dataset.reste=reste;
     d.dataset.id=t.id;
     d.innerHTML=`<input type="checkbox" name="rt" value="${t.id}" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0">
-      <div class="rtrip-main" style="flex:1"><strong>${t.date}</strong> · <span style="color:var(--fg3)">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</span></div>
+      <div class="rtrip-main" style="flex:1"><strong>${fmtDate(t.date)}</strong> · <span style="color:var(--fg3)">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</span></div>
       <span class="rtrip-amt">${reste.toFixed(2)} €</span>`;
     wrap.appendChild(d);
   });
@@ -1798,7 +1791,7 @@ function genReport(){
     const dep = t.dep.split(',')[0].trim();
     const arr = t.arr.split(',')[0].trim();
     html+=`<tr style="background:${bg};border-bottom:1px solid var(--line)">
-      <td style="padding:10px 12px;color:var(--fg2);white-space:nowrap;font-size:11px">${t.date}</td>
+      <td style="padding:10px 12px;color:var(--fg2);white-space:nowrap;font-size:11px">${fmtDate(t.date)}</td>
       <td style="padding:10px 12px;max-width:200px">
         <div style="font-weight:600;color:var(--fg);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dep)}</div>
         <div style="color:var(--fg3);font-size:10px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">→ ${esc(arr)}</div>
@@ -1879,7 +1872,7 @@ function exportCSV(){
   const {ts}=getFilteredTrips();
   if(!ts.length){ toast('Aucun trajet pour cette période','err'); return; }
   const h=['Date','Associé','Départ','Arrivée','Motif','Km aller','Type','Km total','CV','Véhicule','Indemnité €','Remboursé €','Reste €','Statut','Notes'];
-  const rows=ts.map(t=>[t.date,nameOf(t.assoc),`"${t.dep}"`,`"${t.arr}"`,`"${t.motif}"`,t.km,t.ar===2?'AR':'Simple',t.kmT,CV_L[t.cv],t.veh||'',t.ind.toFixed(2),(t.paid||0).toFixed(2),(t.ind-(t.paid||0)).toFixed(2),t.status,`"${t.notes||''}"`]);
+  const rows=ts.map(t=>[fmtDate(t.date),nameOf(t.assoc),`"${t.dep}"`,`"${t.arr}"`,`"${t.motif}"`,t.km,t.ar===2?'AR':'Simple',t.kmT,CV_L[t.cv],t.veh||'',t.ind.toFixed(2),(t.paid||0).toFixed(2),(t.ind-(t.paid||0)).toFixed(2),t.status,`"${t.notes||''}"`]);
   const csv=[h,...rows].map(r=>r.join(';')).join('\n');
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
@@ -1897,12 +1890,11 @@ function getFilteredTrips(){
   if(per!=='tout') ts=ts.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()+1>=mD&&d.getMonth()+1<=mF;});
   return{ts:ts.sort((a,b)=>new Date(a.date)-new Date(b.date))};
 }
-function triggerImport(mode){
-  const id = mode==='assoc' ? 'file-import-assoc' : 'file-import';
-  document.getElementById(id).click();
+function triggerImport(){
+  document.getElementById('file-import').click();
 }
 
-function doImport(e, mode){
+function doImport(e){
   const file=e.target.files[0]; if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
@@ -1910,10 +1902,17 @@ function doImport(e, mode){
       const imp=JSON.parse(ev.target.result);
       if(!imp || typeof imp !== 'object') throw new Error('invalid');
 
-      if(mode==='assoc'){
-        importAssocData(imp, file.name);
-      } else {
+      // Auto-détection : si le profil du fichier correspond au profil actuel → restauration perso
+      // sinon → import d'un associé
+      const srcProfil = imp.profil||{};
+      const srcName = ((srcProfil.fn||'')+' '+(srcProfil.ln||'')).trim().toLowerCase();
+      const myName  = ((DB.profil.fn||'')+' '+(DB.profil.ln||'')).trim().toLowerCase();
+      const isSelf  = srcName && myName && srcName === myName;
+
+      if(isSelf){
         importSelfData(imp);
+      } else {
+        importAssocData(imp, file.name);
       }
     }catch(err){
       console.error(err);
@@ -1921,7 +1920,7 @@ function doImport(e, mode){
     }
   };
   reader.readAsText(file);
-  e.target.value=''; // Reset pour pouvoir réimporter le même fichier
+  e.target.value='';
 }
 
 function importSelfData(imp){
@@ -2049,6 +2048,13 @@ document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=
 // ═══════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════
+// Convertit '2025-03-15' → '15/03/2025'
+function fmtDate(iso){
+  if(!iso) return '';
+  const [y,m,d]=iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 function badge(s){ const m={wait:['b-wait','⏳ En attente'],part:['b-part','◑ Partiel'],done:['b-done','✓ Remboursé']};const[cls,lbl]=m[s]||['b-wait','?'];return`<span class="badge ${cls}">${lbl}</span>`; }
 function dr(l,v){ return `<div class="dr"><span class="dr-l">${l}</span><span class="dr-v">${v}</span></div>`; }
 function sr(l,v){ return `<div class="stat-r"><span class="stat-l">${l}</span><span class="stat-v">${v}</span></div>`; }
@@ -2257,10 +2263,28 @@ function exportPDF(trips, p, pL, yr, totKm, totInd, totPaid){
   });
 
   // ── Tableau ──
-  const head = [['#','Date','Départ','Arrivée','Motif professionnel','Km','Type','Total km','CV','Indemnité €','Remboursé €','Solde €']];
+  const head = [['#','Date trajet','Départ','Arrivée','Motif professionnel','Km','Type','Total km','CV','Indemnité €','Date rembours.','Remboursé €','Solde €']];
+  // Chercher la date du dernier versement pour ce trajet
+  const payDateOf = (tripId) => {
+    const pays = DB.payments
+      .filter(p => (p.tripIds||[]).includes(tripId))
+      .sort((a,b) => new Date(b.date)-new Date(a.date));
+    // Fallback: versements sans tripIds liés à cet associé
+    if(!pays.length){
+      const t = DB.trips.find(x=>x.id===tripId);
+      if(t && t.paid > 0){
+        const byAssoc = DB.payments
+          .filter(p=>p.assoc===t.assoc)
+          .sort((a,b)=>new Date(b.date)-new Date(a.date));
+        return byAssoc.length ? fmtDate(byAssoc[0].date) : '—';
+      }
+    }
+    return pays.length ? fmtDate(pays[0].date) : '—';
+  };
+
   const body = trips.map((t,i)=>[
     String(i+1),
-    t.date,
+    fmtDate(t.date),
     t.dep.split(',').slice(0,2).join(', ').slice(0,35),
     t.arr.split(',').slice(0,2).join(', ').slice(0,35),
     (t.motif||'').slice(0,40),
@@ -2269,13 +2293,14 @@ function exportPDF(trips, p, pL, yr, totKm, totInd, totPaid){
     String(t.kmT),
     {3:'3CV',4:'4CV',5:'5CV',6:'6CV',7:'7CV+'}[t.cv]||'5CV',
     t.ind.toFixed(2),
+    payDateOf(t.id),
     (t.paid||0).toFixed(2),
     (t.ind-(t.paid||0)).toFixed(2),
   ]);
 
   // Ligne totaux
   body.push([
-    '','','','','TOTAL', '', '', String(totKm), '', totInd.toFixed(2), totPaid.toFixed(2), (totInd-totPaid).toFixed(2)
+    '','','','','TOTAL', '', '', String(totKm), '', totInd.toFixed(2), '', totPaid.toFixed(2), (totInd-totPaid).toFixed(2)
   ]);
 
   doc.autoTable({
@@ -2286,18 +2311,19 @@ function exportPDF(trips, p, pL, yr, totKm, totInd, totPaid){
     headStyles: { fillColor:[22,26,30], textColor:[200,169,110], fontStyle:'bold', fontSize:7, halign:'center', lineWidth:0.4, lineColor:[200,169,110] },
     alternateRowStyles: { fillColor:[18,21,24] },
     columnStyles: {
-      0:  { halign:'center', cellWidth:8 },
-      1:  { cellWidth:18 },
-      2:  { cellWidth:36 },
-      3:  { cellWidth:36 },
-      4:  { cellWidth:42 },
-      5:  { halign:'center', cellWidth:11 },
-      6:  { halign:'center', cellWidth:12 },
-      7:  { halign:'center', cellWidth:14, fontStyle:'bold' },
-      8:  { halign:'center', cellWidth:10 },
-      9:  { halign:'right', cellWidth:18, textColor:[200,169,110], fontStyle:'bold' },
-      10: { halign:'right', cellWidth:18, textColor:[77,184,135] },
-      11: { halign:'right', cellWidth:16 },
+      0:  { halign:'center', cellWidth:7 },
+      1:  { cellWidth:17 },
+      2:  { cellWidth:32 },
+      3:  { cellWidth:32 },
+      4:  { cellWidth:38 },
+      5:  { halign:'center', cellWidth:10 },
+      6:  { halign:'center', cellWidth:11 },
+      7:  { halign:'center', cellWidth:13, fontStyle:'bold' },
+      8:  { halign:'center', cellWidth:9 },
+      9:  { halign:'right', cellWidth:17, textColor:[200,169,110], fontStyle:'bold' },
+      10: { halign:'center', cellWidth:17, textColor:[154,160,170] },
+      11: { halign:'right', cellWidth:17, textColor:[77,184,135] },
+      12: { halign:'right', cellWidth:15 },
     },
     didParseCell(data){
       // Ligne totaux
@@ -2307,7 +2333,7 @@ function exportPDF(trips, p, pL, yr, totKm, totInd, totPaid){
         if(data.column.index===4) data.cell.styles.textColor = [200,169,110];
       }
       // Solde colonne 11
-      if(data.column.index===11 && data.section==='body' && data.row.index < body.length-1){
+      if(data.column.index===12 && data.section==='body' && data.row.index < body.length-1){
         const v=parseFloat(data.cell.raw)||0;
         data.cell.styles.textColor = v>0.01 ? [224,85,85] : [77,184,135];
       }
