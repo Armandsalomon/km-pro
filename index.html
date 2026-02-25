@@ -340,6 +340,16 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ink);color:var(
   line-height:1.5;display:none;align-items:center;gap:12px}
 .hint.show{display:flex}
 
+/* ─── EMOJI GRID ─── */
+.emoji-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:4px}
+.eg-item{display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:10px 4px;background:var(--ink4);border:1.5px solid var(--line2);
+  border-radius:12px;cursor:pointer;transition:all .15s;font-size:20px}
+.eg-item span{font-size:9px;font-weight:600;color:var(--fg3);letter-spacing:.02em;text-align:center}
+.eg-item.sel{border-color:var(--gold);background:var(--gold-bg)}
+.eg-item.sel span{color:var(--gold2)}
+.eg-item:active{transform:scale(.93)}
+
 /* ─── MISC ─── */
 .divider{height:1px;background:var(--line);margin:16px 0}
 .section-header{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;
@@ -399,6 +409,8 @@ select.fi option{background:var(--ink4)}
 }
 .print-doc{display:none}
 </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
 
@@ -694,7 +706,9 @@ select.fi option{background:var(--ink4)}
       <div class="fg-s" style="margin-bottom:0">
         <label class="fl">Montant (€) *</label>
         <input type="number" class="fi" id="r-amt" min="0" step="0.01"
-          placeholder="0.00" inputmode="decimal" oninput="rembPreview()">
+          placeholder="0.00" inputmode="decimal"
+          oninput="this._manual=true;rembPreview()"
+          onchange="this._manual=true">
       </div>
       <div class="fg-s" style="margin-bottom:0">
         <label class="fl">Mode</label>
@@ -749,13 +763,7 @@ select.fi option{background:var(--ink4)}
           <div class="exp-desc">Tableau complet pour votre comptable ou liasse fiscale.</div>
         </div>
       </div>
-      <div class="exp-opt" data-type="pdf" onclick="selExp('pdf')">
-        <div class="exp-ico">📋</div>
-        <div>
-          <div class="exp-ttl">Note de frais (PDF)</div>
-          <div class="exp-desc">Document imprimable avec mentions légales DGFiP.</div>
-        </div>
-      </div>
+
     </div>
     <div id="exp-period" style="display:none;margin-top:16px">
       <div class="fi-row">
@@ -848,10 +856,15 @@ select.fi option{background:var(--ink4)}
     <div class="section-header">Données</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
-        onclick="openSheet('sh-export');closeSheet('sh-profil')">📤 Exporter</button>
+        onclick="openSheet('sh-export');closeSheet('sh-profil')">📤 Exporter mes données</button>
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
-        onclick="triggerImport()">📥 Importer</button>
+        onclick="triggerImport('self')">📥 Restaurer sauvegarde</button>
     </div>
+    <button class="btn btn-em" style="width:100%;padding:12px;font-size:13px;border-radius:12px;margin-bottom:10px"
+      onclick="triggerImport('assoc')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Importer données d'un associé
+    </button>
     <button class="btn btn-ink" style="width:100%;padding:11px;font-size:13px;border-radius:12px"
       onclick="changePIN()">🔒 Modifier le code PIN</button>
   </div>
@@ -873,12 +886,31 @@ select.fi option{background:var(--ink4)}
   </div>
   <div class="sb">
     <div class="fg-s">
+      <label class="fl">Icône</label>
+      <div class="emoji-grid" id="fav-emoji-grid">
+        <div class="eg-item sel" data-e="🏠">🏠<span>Domicile</span></div>
+        <div class="eg-item" data-e="🏢">🏢<span>Bureau</span></div>
+        <div class="eg-item" data-e="🏗️">🏗️<span>Chantier</span></div>
+        <div class="eg-item" data-e="🏦">🏦<span>Banque</span></div>
+        <div class="eg-item" data-e="🏭">🏭<span>Fournisseur</span></div>
+        <div class="eg-item" data-e="🛒">🛒<span>Matériaux</span></div>
+        <div class="eg-item" data-e="📦">📦<span>Entrepôt</span></div>
+        <div class="eg-item" data-e="🧑‍💼">🧑‍💼<span>Client</span></div>
+        <div class="eg-item" data-e="🚉">🚉<span>Gare</span></div>
+        <div class="eg-item" data-e="⭐">⭐<span>Autre</span></div>
+      </div>
+    </div>
+    <div class="fg-s">
       <label class="fl">Libellé *</label>
       <input type="text" class="fi" id="fav-label" placeholder="ex : Domicile, Siège social…">
     </div>
     <div class="fg-s">
       <label class="fl">Adresse *</label>
-      <input type="text" class="fi" id="fav-addr" placeholder="Adresse complète">
+      <div class="ac-wrap">
+        <input type="text" class="fi" id="fav-addr" placeholder="Tapez ou collez l'adresse…"
+          autocomplete="off" oninput="acSearch('fav-addr','ac-fav-addr','fav')">
+        <div class="ac-list" id="ac-fav-addr"></div>
+      </div>
     </div>
   </div>
   <div class="sf">
@@ -889,7 +921,8 @@ select.fi option{background:var(--ink4)}
 
 <div class="toast-wrap" id="toasts"></div>
 <div id="print-doc" style="display:none"></div>
-<input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event)">
+<input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event,'self')">
+<input type="file" id="file-import-assoc" accept=".json" style="display:none" onchange="doImport(event,'assoc')">
 
 <style>
 /* Export options styling */
@@ -1030,9 +1063,9 @@ function renderFavList(){
   favs.forEach((f,i)=>{
     const d=document.createElement('div');
     d.className='fav-item';
-    d.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(f.label)}</div><div style="font-size:11px;color:var(--fg3);margin-top:2px">${esc(f.addr)}</div></div>`;
+    d.innerHTML=`<span style="font-size:22px;margin-right:4px">${f.emoji||'⭐'}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${esc(f.label)}</div><div style="font-size:11px;color:var(--fg3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${esc(f.addr)}</div></div>`;
     const b=document.createElement('button');
-    b.innerHTML='🗑'; b.style.cssText='background:none;border:none;color:var(--ruby);font-size:16px;cursor:pointer;padding:4px 8px';
+    b.innerHTML='🗑'; b.style.cssText='background:none;border:none;color:var(--ruby);font-size:16px;cursor:pointer;padding:4px 8px;flex-shrink:0';
     b.addEventListener('click',()=>{ DB.profil.favoris.splice(i,1); saveDB(); renderFavList(); renderFavChips(); });
     d.appendChild(b); c.appendChild(d);
   });
@@ -1045,17 +1078,34 @@ function renderFavChips(){
     favs.forEach(fav=>{
       const el=document.createElement('div');
       el.className='fav-chip';
-      el.innerHTML='⭐ '+esc(fav.label);
+      el.innerHTML=(fav.emoji||'⭐')+' '+esc(fav.label);
       el.addEventListener('click',()=>applyFav(f,fav.addr));
       wrap.appendChild(el);
     });
   });
 }
-function openAddFav(){ setVal('fav-label',''); setVal('fav-addr',''); openSheet('sh-fav'); }
+function openAddFav(){
+  setVal('fav-label',''); setVal('fav-addr','');
+  // Reset emoji selection
+  document.querySelectorAll('.eg-item').forEach((el,i)=>el.classList.toggle('sel',i===0));
+  openSheet('sh-fav');
+  // Emoji click handlers
+  document.querySelectorAll('.eg-item').forEach(el=>{
+    el.onclick=()=>{
+      document.querySelectorAll('.eg-item').forEach(x=>x.classList.remove('sel'));
+      el.classList.add('sel');
+      // Auto-fill label si vide
+      const lbl=document.getElementById('fav-label');
+      if(!lbl.value.trim()) lbl.value=el.querySelector('span').textContent;
+    };
+  });
+}
 function saveFav(){
   const label=getVal('fav-label').trim(), addr=getVal('fav-addr').trim();
   if(!label||!addr){ toast('Remplissez le libellé et l\'adresse','err'); return; }
-  DB.profil.favoris.push({label,addr});
+  const sel=document.querySelector('.eg-item.sel');
+  const emoji=sel?sel.dataset.e:'⭐';
+  DB.profil.favoris.push({label,addr,emoji});
   saveDB(); renderFavList(); renderFavChips();
   closeSheet('sh-fav'); toast('Favori ajouté ✓','ok');
 }
@@ -1075,7 +1125,7 @@ async function applyFav(field, addr){
 // ═══════════════════════════════════════
 // AUTOCOMPLETE NOMINATIM
 // ═══════════════════════════════════════
-const coords = {dep:null, arr:null};
+const coords = {dep:null, arr:null, fav:null};
 const acCache = {};
 let acTimers = {};
 
@@ -1489,6 +1539,8 @@ function openRembSheet(){
   fillSelect('r-assoc');
   setVal('r-date',new Date().toISOString().slice(0,10));
   setVal('r-amt',''); setVal('r-ref','');
+  const amtEl=document.getElementById('r-amt');
+  if(amtEl) amtEl._manual=false;
   rembPreview();
   openSheet('sh-remb');
 }
@@ -1501,18 +1553,66 @@ function rembPreview(){
   renderRembTrips(assoc);
 }
 function renderRembTrips(assoc){
-  const c=document.getElementById('remb-trips');
+  const wrap=document.getElementById('remb-trips');
   const trips=DB.trips.filter(t=>(!assoc||t.assoc===assoc)&&t.status!=='done').sort((a,b)=>new Date(a.date)-new Date(b.date));
-  if(!trips.length){ c.innerHTML='<div style="padding:12px;font-size:12px;color:var(--fg3);text-align:center">Aucun trajet en attente</div>'; return; }
-  c.innerHTML='';
+  if(!trips.length){ wrap.innerHTML='<div style="padding:12px;font-size:12px;color:var(--fg3);text-align:center">Aucun trajet en attente</div>'; return; }
+  wrap.innerHTML='';
+  // Header "Tout sélectionner"
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:8px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;cursor:pointer';
+  hdr.innerHTML=`<input type="checkbox" id="rt-all" style="accent-color:var(--gold);width:16px;height:16px">
+    <label for="rt-all" style="font-size:12px;font-weight:700;color:var(--fg2);cursor:pointer">Tout sélectionner</label>
+    <span style="margin-left:auto;font-size:11px;color:var(--fg3)" id="rt-total-lbl"></span>`;
+  wrap.appendChild(hdr);
+  
   trips.forEach(t=>{
     const reste=+(t.ind-(t.paid||0)).toFixed(2);
     const d=document.createElement('div');
     d.className='rtrip';
-    d.innerHTML=`<input type="checkbox" name="rt" value="${t.id}">
-      <div class="rtrip-main"><strong>${t.date}</strong><br><span style="color:var(--fg3)">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</span></div>
+    d.dataset.reste=reste;
+    d.dataset.id=t.id;
+    d.innerHTML=`<input type="checkbox" name="rt" value="${t.id}" style="accent-color:var(--gold);width:16px;height:16px;flex-shrink:0">
+      <div class="rtrip-main" style="flex:1"><strong>${t.date}</strong> · <span style="color:var(--fg3)">${esc(t.dep.split(',')[0])} → ${esc(t.arr.split(',')[0])}</span></div>
       <span class="rtrip-amt">${reste.toFixed(2)} €</span>`;
-    c.appendChild(d);
+    wrap.appendChild(d);
+  });
+  
+  // Checkbox event : maj montant auto
+  function updateTotal(){
+    const checked=[...document.querySelectorAll('[name="rt"]:checked')];
+    const total=checked.reduce((s,el)=>s+parseFloat(el.closest('.rtrip')?.dataset.reste||0),0);
+    const n=checked.length;
+    document.getElementById('rt-total-lbl').textContent = n>0 ? `${n} trajet(s) · ${total.toFixed(2)} €` : '';
+    // Mettre à jour montant si c'était auto (pas modifié manuellement)
+    const amtEl=document.getElementById('r-amt');
+    if(n>0 && (!amtEl._manual || amtEl._manual===false)){
+      amtEl.value=total.toFixed(2);
+      amtEl._manual=false;
+    } else if(n===0){
+      amtEl.value=''; amtEl._manual=false;
+    }
+    // Mettre à jour le select-all
+    const allCbs=document.querySelectorAll('[name="rt"]');
+    const allAll=document.getElementById('rt-all');
+    if(allAll) allAll.checked = n>0 && n===allCbs.length;
+    rembPreview();
+  }
+  
+  // Sélection sur clic partout dans la ligne (pas juste la checkbox)
+  wrap.querySelectorAll('.rtrip').forEach(row=>{
+    row.addEventListener('click', e=>{
+      if(e.target.tagName==='INPUT') return; // la checkbox gère elle-même
+      const cb=row.querySelector('input[type="checkbox"]');
+      cb.checked=!cb.checked;
+      updateTotal();
+    });
+    row.querySelector('input').addEventListener('change', updateTotal);
+  });
+  
+  // Select all
+  document.getElementById('rt-all')?.addEventListener('change', e=>{
+    document.querySelectorAll('[name="rt"]').forEach(cb=>cb.checked=e.target.checked);
+    updateTotal();
   });
 }
 function saveRemb(){
@@ -1521,20 +1621,34 @@ function saveRemb(){
   if(!assoc||!date||!amt||amt<=0) return toast('Champs obligatoires manquants','err');
   const tripIds=[...document.querySelectorAll('[name="rt"]:checked')].map(e=>e.value);
   DB.payments.push({id:uid(),assoc,date,amt,mode,ref,tripIds,at:new Date().toISOString()});
+  
   const targets = tripIds.length
     ? tripIds.map(id=>DB.trips.find(t=>t.id===id)).filter(Boolean)
     : DB.trips.filter(t=>t.assoc===assoc&&t.status!=='done').sort((a,b)=>new Date(a.date)-new Date(b.date));
-  let rest=amt;
-  for(const t of targets){
-    if(rest<=0) break;
-    const dispo=+(t.ind-(t.paid||0)).toFixed(2);
-    const pay=Math.min(dispo,rest);
-    t.paid=+((t.paid||0)+pay).toFixed(2);
-    rest=+(rest-pay).toFixed(2);
-    t.status = t.paid>=t.ind-.01 ? 'done' : 'part';
-  }
+  
+  if(!targets.length){ saveDB(); closeSheet('sh-remb'); renderAll(); toast(`${amt.toFixed(2)} € enregistré ✓`,'ok'); return; }
+  
+  // Répartition PROPORTIONNELLE au solde restant de chaque trajet
+  const restants = targets.map(t=>+(t.ind-(t.paid||0)).toFixed(2));
+  const totalRestant = restants.reduce((s,v)=>s+v, 0);
+  
+  if(totalRestant <= 0){ saveDB(); closeSheet('sh-remb'); renderAll(); toast(`${amt.toFixed(2)} € enregistré ✓`,'ok'); return; }
+  
+  let distributed = 0;
+  targets.forEach((t, i) => {
+    // Part proportionnelle : (reste_ce_trajet / total_restant) * montant_versé
+    const ratio = restants[i] / totalRestant;
+    let part = +(amt * ratio).toFixed(2);
+    // Dernier trajet : prend le reste exact pour éviter les arrondis
+    if(i === targets.length - 1) part = +(amt - distributed).toFixed(2);
+    const pay = Math.min(restants[i], Math.max(0, part));
+    t.paid = +((t.paid||0) + pay).toFixed(2);
+    distributed = +(distributed + pay).toFixed(2);
+    t.status = t.paid >= t.ind - 0.01 ? 'done' : t.paid > 0 ? 'part' : 'wait';
+  });
+  
   saveDB(); closeSheet('sh-remb'); renderAll();
-  toast(`${amt.toFixed(2)} € enregistré ✓`,'ok');
+  toast(`${amt.toFixed(2)} € répartis sur ${targets.length} trajet(s) ✓`,'ok');
 }
 
 // ═══════════════════════════════════════
@@ -1721,17 +1835,16 @@ function genReport(){
       Document établi le ${new Date().toLocaleDateString('fr-FR')} · ${esc(p.soc||'Conformité du Patrimoine')}
     </div>
   </div>
-  <div style="display:flex;gap:10px;padding:0 20px 20px" class="no-print">
-    <button class="btn btn-ink" id="btn-share" style="flex:1;padding:12px">📤 Partager</button>
-    <button class="btn btn-gold" onclick="window.print()" style="flex:1">🖨️ Imprimer / PDF</button>
+  <div style="padding:0 20px 20px" class="no-print">
+    <button class="btn btn-gold" id="btn-pdf" style="width:100%;padding:15px;font-size:15px;gap:10px">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exporter PDF comptable
+    </button>
   </div>`;
 
   out.innerHTML=html;
-  out.querySelector('#btn-share')?.addEventListener('click',()=>{
-    const txt=`Note de frais KM\n${pL} · ${esc((p.fn||'')+' '+(p.ln||''))}\n${p.soc||''}\n${totKm} km · ${totInd.toFixed(2)} € (barème DGFiP 2025)`;
-    navigator.share?navigator.share({title:'Note de frais KM',text:txt}):(navigator.clipboard?.writeText(txt),toast('Copié ✓','tip'));
-  });
-  toast('Rapport généré ✓','ok');
+  out.querySelector('#btn-pdf')?.addEventListener('click',()=>exportPDF(trips,p,pL,yr,totKm,totInd,totPaid));
+  toast('Rapport généré — cliquez "Exporter PDF" ✓','ok');
 }
 
 function printReport(){
@@ -1752,8 +1865,7 @@ function selExp(type){
 }
 function doExport(){
   if(selExpType==='backup') exportJSON();
-  else if(selExpType==='csv') exportCSV();
-  else{ closeSheet('sh-export'); switchScreen('rapport'); setTimeout(()=>{genReport();setTimeout(()=>window.print(),400)},300); }
+  else exportCSV();
 }
 function exportJSON(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
@@ -1785,20 +1897,127 @@ function getFilteredTrips(){
   if(per!=='tout') ts=ts.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()+1>=mD&&d.getMonth()+1<=mF;});
   return{ts:ts.sort((a,b)=>new Date(a.date)-new Date(b.date))};
 }
-function triggerImport(){ document.getElementById('file-import').click(); }
-function doImport(e){
+function triggerImport(mode){
+  const id = mode==='assoc' ? 'file-import-assoc' : 'file-import';
+  document.getElementById(id).click();
+}
+
+function doImport(e, mode){
   const file=e.target.files[0]; if(!file)return;
   const reader=new FileReader();
   reader.onload=ev=>{
     try{
       const imp=JSON.parse(ev.target.result);
-      if(!confirm(`Importer ${imp.trips?.length||0} trajets et ${imp.payments?.length||0} versements ? (fusion)`)) return;
-      if(imp.trips){ const ex=new Set(DB.trips.map(t=>t.id)); imp.trips.forEach(t=>{if(!ex.has(t.id))DB.trips.push(t);}); }
-      if(imp.payments){ const ex=new Set(DB.payments.map(p=>p.id)); imp.payments.forEach(p=>{if(!ex.has(p.id))DB.payments.push(p);}); }
-      saveDB(); renderAll(); closeSheet('sh-profil'); toast('Import réussi ✓','ok');
-    }catch{ toast('Fichier JSON invalide','err'); }
+      if(!imp || typeof imp !== 'object') throw new Error('invalid');
+
+      if(mode==='assoc'){
+        importAssocData(imp, file.name);
+      } else {
+        importSelfData(imp);
+      }
+    }catch(err){
+      console.error(err);
+      toast('Fichier JSON invalide ou corrompu','err');
+    }
   };
-  reader.readAsText(file); e.target.value='';
+  reader.readAsText(file);
+  e.target.value=''; // Reset pour pouvoir réimporter le même fichier
+}
+
+function importSelfData(imp){
+  // Restauration classique : fusion sans écrasement par ID
+  const exTrips  = new Set(DB.trips.map(t=>t.id));
+  const exPay    = new Set(DB.payments.map(p=>p.id));
+  let nTrips=0, nPay=0;
+
+  (imp.trips||[]).forEach(t=>{
+    if(!exTrips.has(t.id)){ DB.trips.push(t); nTrips++; }
+  });
+  (imp.payments||[]).forEach(p=>{
+    if(!exPay.has(p.id)){ DB.payments.push(p); nPay++; }
+  });
+
+  // Profil : fusion des favoris uniquement (pas écraser le profil perso)
+  if(imp.profil?.favoris){
+    const exFav = new Set((DB.profil.favoris||[]).map(f=>f.label+'|'+f.addr));
+    (imp.profil.favoris).forEach(f=>{
+      if(!exFav.has(f.label+'|'+f.addr)) DB.profil.favoris.push(f);
+    });
+  }
+
+  saveDB(); renderAll(); closeSheet('sh-profil');
+  toast(`Restauration : +${nTrips} trajet(s), +${nPay} versement(s) fusionné(s) ✓`,'ok');
+}
+
+function importAssocData(imp, filename){
+  // Détecter le nom de l'associé depuis le profil de la sauvegarde
+  const srcProfil = imp.profil||{};
+  const srcName = ((srcProfil.fn||'')+' '+(srcProfil.ln||'')).trim();
+  const detectedName = srcName || filename.replace(/\.json$/i,'').replace(/[-_]/g,' ');
+
+  // Demander confirmation avec preview
+  const nTrips  = (imp.trips||[]).length;
+  const nPay    = (imp.payments||[]).length;
+  const exTrips = new Set(DB.trips.map(t=>t.id));
+  const exPay   = new Set(DB.payments.map(p=>p.id));
+  const newTrips  = (imp.trips||[]).filter(t=>!exTrips.has(t.id));
+  const newPay    = (imp.payments||[]).filter(p=>!exPay.has(p.id));
+
+  const msg = [
+    `📂 Fichier : ${filename}`,
+    `👤 Associé détecté : ${detectedName||'(inconnu)'}`,
+    ``,
+    `Dans ce fichier :`,
+    `  • ${nTrips} trajet(s) total`,
+    `  • ${nPay} versement(s) total`,
+    ``,
+    `Nouveaux éléments à ajouter :`,
+    `  ✅ ${newTrips.length} trajet(s) nouveau(x)`,
+    `  ✅ ${newPay.length} versement(s) nouveau(x)`,
+    `  ⏭️ ${nTrips-newTrips.length} trajet(s) déjà présent(s) — ignorés`,
+    ``,
+    `Continuer l'import ?`
+  ].join('\n');
+
+  if(!confirm(msg)) return;
+
+  // Import avec réattribution de l'associé
+  // → on garde le champ "assoc" original de chaque trajet pour préserver
+  //   les données de l'associé (il peut avoir plusieurs associés lui aussi).
+  //   MAIS si le champ assoc est 'me', on le remplace par le nom détecté.
+  let nAddedTrips=0, nAddedPay=0;
+
+  newTrips.forEach(t=>{
+    const tripCopy = {...t};
+    // Si l'associé se désignait 'me', le remplacer par son vrai nom
+    if(tripCopy.assoc === 'me' || !tripCopy.assoc){
+      tripCopy.assoc = srcName || detectedName || 'Associé importé';
+    }
+    // Marquer comme importé pour traçabilité
+    tripCopy._src = srcName || detectedName;
+    tripCopy._importedAt = new Date().toISOString();
+    DB.trips.push(tripCopy);
+    nAddedTrips++;
+  });
+
+  newPay.forEach(p=>{
+    const payCopy = {...p};
+    if(payCopy.assoc === 'me' || !payCopy.assoc){
+      payCopy.assoc = srcName || detectedName || 'Associé importé';
+    }
+    payCopy._src = srcName || detectedName;
+    payCopy._importedAt = new Date().toISOString();
+    DB.payments.push(payCopy);
+    nAddedPay++;
+  });
+
+  saveDB(); renderAll(); closeSheet('sh-profil');
+
+  if(nAddedTrips===0 && nAddedPay===0){
+    toast('Tout était déjà à jour — aucun doublon ajouté ✓','tip');
+  } else {
+    toast(`Import associé : +${nAddedTrips} trajet(s), +${nAddedPay} versement(s) ✓`,'ok');
+  }
 }
 
 // ═══════════════════════════════════════
@@ -1963,6 +2182,180 @@ function initPin(){
   pinMode='check'; pinBuffer='';
 }
 
+
+
+// ═══════════════════════════════════════
+// EXPORT PDF COMPTABLE (jsPDF + autoTable)
+// ═══════════════════════════════════════
+function exportPDF(trips, p, pL, yr, totKm, totInd, totPaid){
+  if(typeof window.jspdf === 'undefined' && typeof jspdf === 'undefined'){
+    toast('Bibliothèque PDF non chargée — vérifiez votre connexion','err'); return;
+  }
+  const { jsPDF } = window.jspdf || jspdf;
+  const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
+  const W = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const gold = [200, 169, 110];
+  const ink  = [14, 16, 18];
+  const fg2  = [154, 160, 170];
+  const em   = [77, 184, 135];
+  const today = new Date().toLocaleDateString('fr-FR');
+
+  // ── En-tête ──
+  doc.setFillColor(...ink);
+  doc.rect(0, 0, W, 24, 'F');
+  doc.setFillColor(...gold);
+  doc.rect(0, 0, 3, 24, 'F');
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.setTextColor(255,255,255);
+  doc.text('KM Pro', 10, 10);
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(...fg2);
+  doc.text('Note de frais kilométriques', 10, 16.5);
+
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(10);
+  doc.setTextColor(255,255,255);
+  doc.text((p.soc||'Conformité du Patrimoine').toUpperCase(), W/2, 10, {align:'center'});
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(9);
+  doc.setTextColor(...fg2);
+  doc.text(`Période : ${pL}  ·  Établie par : ${((p.fn||'')+' '+(p.ln||'')).trim()}${p.veh?' · Véh. : '+p.veh:''}`, W/2, 16.5, {align:'center'});
+
+  doc.setFontSize(8);
+  doc.setTextColor(...fg2);
+  doc.text(`Généré le ${today}`, W-10, 10, {align:'right'});
+  doc.setFontSize(7);
+  doc.text('Barème DGFiP 2025 · BOI-BAREME-000001', W-10, 15.5, {align:'right'});
+
+  // ── KPI band ──
+  const kpiY = 28;
+  const kpiW = (W - 20) / 4;
+  const kpis = [
+    { l:'Km parcourus', v:totKm+' km', c:gold },
+    { l:'Indemnités dues', v:totInd.toFixed(2)+' €', c:gold },
+    { l:'Remboursé', v:totPaid.toFixed(2)+' €', c:em },
+    { l:'Solde restant', v:(totInd-totPaid).toFixed(2)+' €', c: totInd-totPaid>0.01?[224,85,85]:em }
+  ];
+  kpis.forEach((k,i)=>{
+    const x=10 + i*kpiW;
+    doc.setFillColor(22,26,30);
+    doc.roundedRect(x, kpiY, kpiW-4, 14, 2, 2, 'F');
+    doc.setFillColor(...k.c);
+    doc.rect(x, kpiY, 2, 14, 'F');
+    doc.setFontSize(7);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...fg2);
+    doc.text(k.l.toUpperCase(), x+5, kpiY+5);
+    doc.setFontSize(12);
+    doc.setFont('helvetica','bold');
+    doc.setTextColor(...k.c);
+    doc.text(k.v, x+5, kpiY+11.5);
+  });
+
+  // ── Tableau ──
+  const head = [['#','Date','Départ','Arrivée','Motif professionnel','Km','Type','Total km','CV','Indemnité €','Remboursé €','Solde €']];
+  const body = trips.map((t,i)=>[
+    String(i+1),
+    t.date,
+    t.dep.split(',').slice(0,2).join(', ').slice(0,35),
+    t.arr.split(',').slice(0,2).join(', ').slice(0,35),
+    (t.motif||'').slice(0,40),
+    String(t.km),
+    t.ar===2?'A/R':'Aller',
+    String(t.kmT),
+    {3:'3CV',4:'4CV',5:'5CV',6:'6CV',7:'7CV+'}[t.cv]||'5CV',
+    t.ind.toFixed(2),
+    (t.paid||0).toFixed(2),
+    (t.ind-(t.paid||0)).toFixed(2),
+  ]);
+
+  // Ligne totaux
+  body.push([
+    '','','','','TOTAL', '', '', String(totKm), '', totInd.toFixed(2), totPaid.toFixed(2), (totInd-totPaid).toFixed(2)
+  ]);
+
+  doc.autoTable({
+    head, body,
+    startY: kpiY + 18,
+    margin: { left:10, right:10 },
+    styles: { fontSize:7.5, cellPadding:2.5, lineColor:[30,35,40], lineWidth:0.2, textColor:[230,232,235], fillColor:[14,16,18] },
+    headStyles: { fillColor:[22,26,30], textColor:[200,169,110], fontStyle:'bold', fontSize:7, halign:'center', lineWidth:0.4, lineColor:[200,169,110] },
+    alternateRowStyles: { fillColor:[18,21,24] },
+    columnStyles: {
+      0:  { halign:'center', cellWidth:8 },
+      1:  { cellWidth:18 },
+      2:  { cellWidth:36 },
+      3:  { cellWidth:36 },
+      4:  { cellWidth:42 },
+      5:  { halign:'center', cellWidth:11 },
+      6:  { halign:'center', cellWidth:12 },
+      7:  { halign:'center', cellWidth:14, fontStyle:'bold' },
+      8:  { halign:'center', cellWidth:10 },
+      9:  { halign:'right', cellWidth:18, textColor:[200,169,110], fontStyle:'bold' },
+      10: { halign:'right', cellWidth:18, textColor:[77,184,135] },
+      11: { halign:'right', cellWidth:16 },
+    },
+    didParseCell(data){
+      // Ligne totaux
+      if(data.row.index === body.length - 1){
+        data.cell.styles.fillColor = [26,30,34];
+        data.cell.styles.fontStyle = 'bold';
+        if(data.column.index===4) data.cell.styles.textColor = [200,169,110];
+      }
+      // Solde colonne 11
+      if(data.column.index===11 && data.section==='body' && data.row.index < body.length-1){
+        const v=parseFloat(data.cell.raw)||0;
+        data.cell.styles.textColor = v>0.01 ? [224,85,85] : [77,184,135];
+      }
+    },
+    willDrawPage(data){
+      // Répéter l'en-tête sur chaque page
+      if(data.pageNumber > 1){
+        doc.setFillColor(...ink);
+        doc.rect(0,0,W,12,'F');
+        doc.setFillColor(...gold);
+        doc.rect(0,0,3,12,'F');
+        doc.setFont('helvetica','bold');
+        doc.setFontSize(8);
+        doc.setTextColor(255,255,255);
+        doc.text('KM Pro — '+pL, 8, 8);
+        doc.setFont('helvetica','normal');
+        doc.setTextColor(...fg2);
+        doc.text(`Page ${data.pageNumber}`, W-8, 8, {align:'right'});
+      }
+    }
+  });
+
+  // ── Pied de page ──
+  const finalY = doc.lastAutoTable.finalY + 6;
+  if(finalY < pageH - 20){
+    doc.setFontSize(7);
+    doc.setTextColor(...fg2);
+    doc.setFont('helvetica','normal');
+    const legal=`Indemnités calculées conformément au barème kilométrique DGFiP 2025 (BOI-BAREME-000001, arrêté du 27 mars 2025). Frais professionnels réels déductibles du résultat imposable.`;
+    doc.text(legal, 10, finalY, {maxWidth: W-20});
+  }
+
+  // Numéros de page sur toutes les pages
+  const totalPages = doc.internal.getNumberOfPages();
+  for(let pg=1; pg<=totalPages; pg++){
+    doc.setPage(pg);
+    doc.setFontSize(7);
+    doc.setTextColor(...fg2);
+    doc.text(`Page ${pg} / ${totalPages}`, W-10, pageH-5, {align:'right'});
+    doc.setFillColor(...gold);
+    doc.rect(0, pageH-1.5, W, 1.5, 'F');
+  }
+
+  // Sauvegarde
+  const nom=`km-pro_${pL.replace(/\s/g,'-').toLowerCase()}_${today.replace(/\//g,'-')}.pdf`;
+  doc.save(nom);
+  toast('PDF exporté ✓','ok');
+}
 
 // ═══════════════════════════════════════
 // INIT
