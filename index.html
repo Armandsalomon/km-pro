@@ -18,6 +18,31 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
 
+/* ─── PIN ─── */
+.pin-screen{position:fixed;inset:0;z-index:9998;background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 32px;transition:opacity .4s}
+.pin-screen.hidden{opacity:0;pointer-events:none}
+.pin-logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:600;
+  color:var(--gold);margin-bottom:8px;letter-spacing:-.01em}
+.pin-sub{font-size:13px;color:var(--fg3);margin-bottom:48px;text-align:center;line-height:1.5}
+.pin-dots{display:flex;gap:14px;margin-bottom:40px;height:14px;align-items:center}
+.pin-dot{width:12px;height:12px;border-radius:50%;background:var(--line2);
+  border:1.5px solid var(--fg3);transition:all .15s}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);transform:scale(1.15)}
+.pin-dot.error{background:var(--ruby);border-color:var(--ruby);animation:shake .35s ease}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:16px;
+  padding:18px;font-size:22px;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;
+  color:var(--fg);cursor:pointer;text-align:center;transition:all .12s;
+  -webkit-user-select:none;user-select:none}
+.pin-key:active{background:var(--ink5);transform:scale(.93);border-color:var(--gold-ring)}
+.pin-key.del{font-size:18px;color:var(--fg3)}
+.pin-key.empty{visibility:hidden}
+.pin-hint{margin-top:28px;font-size:12px;color:var(--fg3);text-align:center;line-height:1.5}
+.pin-change{margin-top:12px;font-size:12px;color:var(--gold);cursor:pointer;
+  text-decoration:underline;text-underline-offset:3px}
+
 /* ─── TOKENS ─── */
 :root{
   --ink:       #080909;
@@ -185,6 +210,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ink);color:var(
   font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;
   transition:border-color .2s,box-shadow .2s;-webkit-appearance:none;appearance:none}
 .fi:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-ring)}
+.fi.field-err{border-color:var(--ruby)!important;box-shadow:0 0 0 3px rgba(224,85,85,.18)!important;animation:errShake .35s ease}
+@keyframes errShake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
 .fi::placeholder{color:var(--fg3)}
 .fi-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
 .fg-s{margin-bottom:14px}
@@ -246,13 +273,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ink);color:var(
 .leaflet-tile{filter:brightness(.55) saturate(.6) hue-rotate(5deg)}
 
 /* ─── ROUTE CALC BTN ─── */
-.route-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:8px;
-  background:var(--ink4);border:1px solid var(--line2);border-radius:12px;
-  padding:13px;font-size:13px;font-weight:600;color:var(--fg2);cursor:pointer;
-  font-family:'Plus Jakarta Sans',sans-serif;letter-spacing:.02em;
-  transition:all .2s;margin-bottom:14px}
-.route-btn:active,.route-btn:hover{background:var(--ink5);border-color:var(--gold-ring);color:var(--gold2)}
-.route-btn:disabled{opacity:.5;cursor:not-allowed}
+/* route-btn removed */
 
 /* ─── BUTTONS ─── */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;border:none;
@@ -279,6 +300,8 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--ink);color:var(
 .chart-ttl{font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;
   text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:6px}
 .chart-ttl span{width:8px;height:8px;border-radius:50%;display:inline-block}
+/* Fix chart resize bug - canvas must have explicit container height */
+.chart-box{position:relative;height:160px;width:100%}
 
 /* ─── REMB CARD ─── */
 .remb-card{background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);
@@ -328,15 +351,85 @@ select.fi option{background:var(--ink4)}
 .sapphire{color:var(--sapphire)}
 .serif{font-family:'Cormorant Garamond',serif}
 
+
+
 /* ─── PRINT ─── */
+
+/* ─── PIN LOCK ─── */
+#pin-screen{position:fixed;inset:0;z-index:9000;background:var(--ink);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 32px;transition:opacity .3s}
+#pin-screen.hidden{opacity:0;pointer-events:none}
+.pin-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:600;
+  color:var(--fg);margin-bottom:6px;letter-spacing:-.01em}
+.pin-sub{font-size:13px;color:var(--fg3);margin-bottom:48px;font-weight:500}
+.pin-dots{display:flex;gap:14px;margin-bottom:48px}
+.pin-dot{width:14px;height:14px;border-radius:50%;background:var(--ink5);
+  border:1.5px solid var(--line2);transition:all .15s}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold)}
+.pin-dot.error{background:var(--ruby);border-color:var(--ruby)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%;max-width:280px}
+.pin-key{background:var(--ink3);border:1px solid var(--line2);border-radius:16px;
+  padding:18px 10px;font-size:24px;font-weight:600;font-family:'Cormorant Garamond',serif;
+  color:var(--fg);cursor:pointer;text-align:center;
+  transition:background .12s,transform .1s,border-color .15s;-webkit-user-select:none;
+  box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.pin-key:active{background:var(--ink5);transform:scale(.94);border-color:var(--gold-ring)}
+.pin-key.del{font-size:18px;font-family:'Plus Jakarta Sans',sans-serif;color:var(--fg3)}
+.pin-key.empty{background:transparent;border-color:transparent;box-shadow:none;cursor:default}
+.pin-err{font-size:13px;color:var(--ruby);height:20px;text-align:center;margin-bottom:16px;
+  font-weight:600;transition:opacity .2s}
+.pin-setup-wrap{width:100%;max-width:280px;text-align:center;margin-bottom:32px}
+.pin-setup-label{font-size:13px;color:var(--gold2);font-weight:600;margin-bottom:16px}
+
+
+/* ─── FIELD VALIDATION ─── */
+.fi.field-err{border-color:var(--ruby)!important;box-shadow:0 0 0 3px rgba(224,85,85,.18)!important;animation:shake .35s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.field-err-label{color:var(--ruby)!important}
 @media print{
-  .nav,.fab,.overlay,.toast-wrap{display:none!important}
-  body{background:#fff;color:#000;overflow:visible}
-  .screen{position:static;display:block!important;overflow:visible;padding:0}
+  @page{margin:18mm 15mm;size:A4}
+  .nav,.fab,.overlay,.toast-wrap,.ph-action,.btn{display:none!important}
+  body{background:#fff!important;color:#1a1a1a!important;overflow:visible;font-family:'Plus Jakarta Sans',sans-serif;font-size:11pt}
+  .screen{position:static!important;display:block!important;overflow:visible!important;padding:0!important}
+  #s-rapport{display:block!important}
+  #report-out{all:unset;display:block}
+  .print-doc{display:block!important}
+  .no-print{display:none!important}
 }
+.print-doc{display:none}
 </style>
 </head>
 <body>
+
+<div id="pin-screen">
+  <div class="pin-logo">KM Pro</div>
+  <div class="pin-sub" id="pin-label">Entrez votre code</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="pd0"></div>
+    <div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div>
+    <div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-err" id="pin-err"></div>
+  <div class="pin-pad" id="pin-pad">
+    <div class="pin-key" onclick="pinKey('1')">1</div>
+    <div class="pin-key" onclick="pinKey('2')">2</div>
+    <div class="pin-key" onclick="pinKey('3')">3</div>
+    <div class="pin-key" onclick="pinKey('4')">4</div>
+    <div class="pin-key" onclick="pinKey('5')">5</div>
+    <div class="pin-key" onclick="pinKey('6')">6</div>
+    <div class="pin-key" onclick="pinKey('7')">7</div>
+    <div class="pin-key" onclick="pinKey('8')">8</div>
+    <div class="pin-key" onclick="pinKey('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinKey('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+</div>
+
+
+
 <div class="app">
 <div class="screens">
 
@@ -394,11 +487,11 @@ select.fi option{background:var(--ink4)}
   </div>
   <div class="chart-card">
     <div class="chart-ttl"><span style="background:var(--gold)"></span>Kilomètres par mois</div>
-    <canvas id="c-km" height="150"></canvas>
+    <div style="position:relative;height:160px"><canvas id="c-km"></canvas></div>
   </div>
   <div class="chart-card">
     <div class="chart-ttl"><span style="background:var(--emerald)"></span>Indemnités (€)</div>
-    <canvas id="c-ind" height="150"></canvas>
+    <div style="position:relative;height:160px"><canvas id="c-ind"></canvas></div>
   </div>
   <div class="pad" style="padding-bottom:8px">
     <div class="section-header">Récapitulatif</div>
@@ -513,11 +606,6 @@ select.fi option{background:var(--ink4)}
       </div>
     </div>
 
-    <button class="route-btn" id="btn-route" onclick="calcRoute()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
-      Calculer la distance automatiquement
-    </button>
-
     <div class="map-wrap" id="map-wrap"><div id="trip-map"></div></div>
 
     <div class="calc-box" id="calc-box">Saisissez les km pour voir l'indemnité calculée</div>
@@ -536,8 +624,8 @@ select.fi option{background:var(--ink4)}
       <div class="fg-s" style="margin-bottom:0">
         <label class="fl">Type</label>
         <select class="fi" id="t-ar" onchange="calcPreview()">
+          <option value="2" selected>Aller-retour ×2</option>
           <option value="1">Aller simple</option>
-          <option value="2">Aller-retour ×2</option>
         </select>
       </div>
     </div>
@@ -753,13 +841,19 @@ select.fi option{background:var(--ink4)}
     <div id="fav-list"></div>
 
     <div class="divider"></div>
+    <div class="section-header">Sécurité</div>
+    <div id="pin-btn-wrap" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+
+    <div class="divider"></div>
     <div class="section-header">Données</div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
         onclick="openSheet('sh-export');closeSheet('sh-profil')">📤 Exporter</button>
       <button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px"
         onclick="triggerImport()">📥 Importer</button>
     </div>
+    <button class="btn btn-ink" style="width:100%;padding:11px;font-size:13px;border-radius:12px"
+      onclick="changePIN()">🔒 Modifier le code PIN</button>
   </div>
   <div class="sf" style="gap:10px">
     <button class="btn btn-gold" onclick="saveProfil()">Sauvegarder le profil</button>
@@ -794,6 +888,7 @@ select.fi option{background:var(--ink4)}
 </div>
 
 <div class="toast-wrap" id="toasts"></div>
+<div id="print-doc" style="display:none"></div>
 <input type="file" id="file-import" accept=".json" style="display:none" onchange="doImport(event)">
 
 <style>
@@ -1101,9 +1196,7 @@ function hideMap(){
 async function calcRoute(){
   const dep=getVal('t-dep').trim(), arr=getVal('t-arr').trim();
   if(!dep||!arr){ toast('Renseignez départ et arrivée','err'); return; }
-  const btn=document.getElementById('btn-route');
   const box=document.getElementById('calc-box');
-  btn.disabled=true;
   box.className='calc-box loading'; box.textContent='Calcul de l\'itinéraire…';
 
   // Géocoder si pas de coords
@@ -1145,7 +1238,6 @@ async function calcRoute(){
     showMap(coords.dep,coords.arr,null);
     toast('Estimation : '+km+' km (vérifiez)','tip');
   }
-  btn.disabled=false;
 }
 
 // ═══════════════════════════════════════
@@ -1177,7 +1269,7 @@ function openNewTrajet(){
   document.getElementById('sh-trajet-ttl').textContent='Nouveau trajet';
   setVal('t-date',new Date().toISOString().slice(0,10));
   ['t-dep','t-arr','t-motif','t-notes'].forEach(id=>setVal(id,''));
-  setVal('t-km',''); setVal('t-ar','1');
+  setVal('t-km',''); setVal('t-ar','2');
   fillSelect('t-assoc');
   prefillTrip();
   renderFavChips();
@@ -1195,8 +1287,25 @@ function saveTrajet(){
   const ar=parseInt(getVal('t-ar'))||1;
   const cv=parseInt(getVal('t-cv'))||5;
   const veh=getVal('t-veh').trim(), notes=getVal('t-notes').trim();
-  if(!assoc||!date||!dep||!arr||!motif) return toast('Champs obligatoires manquants','err');
-  if(km<=0) return toast('Saisissez les kilomètres','err');
+  // Validation visuelle
+  const errs = [];
+  const checkField = (id, val, label) => {
+    const el = document.getElementById(id);
+    if(!val){ el.classList.add('field-err'); errs.push({el,label}); setTimeout(()=>el.classList.remove('field-err'),1500); }
+    else el.classList.remove('field-err');
+  };
+  checkField('t-assoc', assoc, 'Associé');
+  checkField('t-date', date, 'Date');
+  checkField('t-dep', dep, 'Départ');
+  checkField('t-arr', arr, 'Arrivée');
+  checkField('t-motif', motif, 'Motif');
+  checkField('t-km', km>0?'ok':'', 'Kilomètres');
+  if(errs.length){
+    const msg = errs.length===1 ? `Champ manquant : ${errs[0].label}` : `${errs.length} champs manquants — vérifiez les champs surlignés`;
+    toast(msg,'err');
+    errs[0].el.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   const yr=new Date(date).getFullYear(), kmT=km*ar;
   const base=kmYear(assoc,yr,editId);
   const ind=indem(base,kmT,cv);
@@ -1442,14 +1551,24 @@ function renderStats(){
     const m=new Date(t.date).getMonth(); kmM[m]+=t.kmT; indM[m]+=t.ind; nM[m]++;
   });
   const labels=ML.slice(0,maxM+1), kmD=kmM.slice(0,maxM+1), indD=indM.slice(0,maxM+1).map(v=>+v.toFixed(2));
-  const chartDef = (type,data,color,unit)=>({
+  const chartDef = (type,data,color,unit,isRerender)=>({
     type, data:{labels,datasets:[{data,backgroundColor:type==='bar'?color+'99':color+'22',borderColor:color,borderWidth:2,borderRadius:type==='bar'?6:0,fill:type==='line',tension:.35,pointBackgroundColor:color,pointRadius:4}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} ${unit}`}}},
+    options:{responsive:true,maintainAspectRatio:false,
+      animation:{duration:isRerender?0:500},  // Pas d'animation au re-render = pas de grossissement
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.parsed.y} ${unit}`}}},
       scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5260',font:{size:10,family:'Plus Jakarta Sans'}}},
               y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#4a5260',font:{size:10,family:'Plus Jakarta Sans'}},beginAtZero:true}}}
   });
-  if(cKm){cKm.destroy();} cKm=new Chart(document.getElementById('c-km'),chartDef('bar',kmD,'#c8a96e','km'));
-  if(cInd){cInd.destroy();} cInd=new Chart(document.getElementById('c-ind'),chartDef('line',indD,'#4db887','€'));
+  const isRerender = !!(cKm||cInd);
+  if(cKm){cKm.destroy(); cKm=null;} 
+  if(cInd){cInd.destroy(); cInd=null;}
+  // Recréer les canvas pour éviter le bug de taille résiduelle
+  const boxKm=document.querySelector('#c-km').parentElement;
+  const boxInd=document.querySelector('#c-ind').parentElement;
+  boxKm.innerHTML='<canvas id="c-km"></canvas>';
+  boxInd.innerHTML='<canvas id="c-ind"></canvas>';
+  cKm=new Chart(document.getElementById('c-km'),chartDef('bar',kmD,'#c8a96e','km',isRerender));
+  cInd=new Chart(document.getElementById('c-ind'),chartDef('line',indD,'#4db887','€',isRerender));
 
   const totKm=kmM.reduce((s,v)=>s+v,0), totInd=+indM.reduce((s,v)=>s+v,0).toFixed(2);
   const totPaid=+DB.payments.filter(p=>new Date(p.date).getFullYear()===yr).reduce((s,p)=>s+p.amt,0).toFixed(2);
@@ -1487,46 +1606,139 @@ function genReport(){
   if(per==='trim3'){mD=7;mF=9;} if(per==='trim4'){mD=10;mF=12;}
   const trips=DB.trips.filter(t=>{const d=new Date(t.date);return d.getFullYear()===yr&&d.getMonth()+1>=mD&&d.getMonth()+1<=mF;}).sort((a,b)=>new Date(a.date)-new Date(b.date));
   const pL={mois:'Mois en cours',trim1:`T1 ${yr}`,trim2:`T2 ${yr}`,trim3:`T3 ${yr}`,trim4:`T4 ${yr}`,annee:`Année ${yr}`}[per];
-  const p=DB.profil, totKm=trips.reduce((s,t)=>s+t.kmT,0), totInd=+trips.reduce((s,t)=>s+t.ind,0).toFixed(2);
+  const p=DB.profil;
+  const totKm=trips.reduce((s,t)=>s+t.kmT,0);
+  const totInd=+trips.reduce((s,t)=>s+t.ind,0).toFixed(2);
+  const totPaid=+trips.reduce((s,t)=>s+(t.paid||0),0).toFixed(2);
+  const totReste=+(totInd-totPaid).toFixed(2);
   const out=document.getElementById('report-out');
-  if(!trips.length){ out.innerHTML=`<div class="empty"><div class="empty-ico">📭</div><h3>Aucun trajet</h3><p>Aucun trajet pour cette période</p></div>`; return; }
+  if(!trips.length){
+    out.innerHTML=`<div class="empty"><div class="empty-ico">📭</div><h3>Aucun trajet</h3><p>Aucun trajet pour cette période</p></div>`;
+    return;
+  }
 
-  let html=`<div style="margin:0 20px 12px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:20px">
-    <div class="serif" style="font-size:22px;font-weight:600;margin-bottom:6px">Note de frais kilométriques</div>
-    <div style="font-size:12px;color:var(--fg3);line-height:1.7">${esc(p.soc||'Conformité du Patrimoine')}<br>Période : ${pL} · ${esc((p.fn||'')+' '+(p.ln||''))}</div>
-    <div style="display:flex;gap:12px;margin-top:16px">
-      <div class="kpi c-gold" style="flex:1;padding:14px"><div class="kpi-l">Km</div><div class="kpi-v">${totKm}<span class="kpi-u"> km</span></div></div>
-      <div class="kpi c-em" style="flex:1;padding:14px"><div class="kpi-l">Indemnités</div><div class="kpi-v">${totInd.toFixed(2)}<span class="kpi-u"> €</span></div></div>
+  // ── En-tête professionnel ────────────────────────────────────
+  let html=`
+  <div style="margin:0 20px 16px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);overflow:hidden">
+    <div style="background:linear-gradient(135deg,#1a1410,#2a1f0e);padding:20px 20px 18px;border-bottom:1px solid var(--gold-ring)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+          <div class="serif" style="font-size:26px;font-weight:600;color:var(--gold3);line-height:1;margin-bottom:6px">Note de frais kilométriques</div>
+          <div style="font-size:12px;color:var(--gold2);opacity:.8">${esc(p.soc||'Conformité du Patrimoine')}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:11px;color:var(--gold2);opacity:.7;margin-bottom:3px">Période</div>
+          <div style="font-size:14px;font-weight:700;color:var(--gold3)">${pL}</div>
+          <div style="font-size:11px;color:var(--gold2);opacity:.7;margin-top:6px">Généré le ${new Date().toLocaleDateString('fr-FR')}</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(200,169,110,.15);display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="font-size:12px;color:var(--gold2);opacity:.7">Collaborateur</div>
+        <div style="font-size:12px;font-weight:600;color:var(--gold3);text-align:right">${esc((p.fn||'—')+' '+(p.ln||''))}</div>
+        <div style="font-size:12px;color:var(--gold2);opacity:.7">Véhicule</div>
+        <div style="font-size:12px;font-weight:600;color:var(--gold3);text-align:right">${esc(p.veh||'—')}</div>
+        <div style="font-size:12px;color:var(--gold2);opacity:.7">Barème</div>
+        <div style="font-size:12px;font-weight:600;color:var(--gold3);text-align:right">DGFiP 2025 — BOI-BAREME-000001</div>
+      </div>
     </div>
-  </div>
-  <div style="padding:0 20px 8px"><div style="font-size:11px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Détail des trajets</div></div>`;
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;border-bottom:1px solid var(--line)">
+      <div style="padding:14px 16px;border-right:1px solid var(--line)">
+        <div style="font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Trajets</div>
+        <div class="serif" style="font-size:22px;font-weight:600">${trips.length}</div>
+      </div>
+      <div style="padding:14px 16px;border-right:1px solid var(--line)">
+        <div style="font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Km total</div>
+        <div class="serif" style="font-size:22px;font-weight:600">${totKm} <span style="font-size:13px;color:var(--fg3);font-family:'Plus Jakarta Sans',sans-serif">km</span></div>
+      </div>
+      <div style="padding:14px 16px;border-right:1px solid var(--line)">
+        <div style="font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Indemnités</div>
+        <div class="serif" style="font-size:22px;font-weight:600;color:var(--gold)">${totInd.toFixed(2)} <span style="font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">€</span></div>
+      </div>
+      <div style="padding:14px 16px">
+        <div style="font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">Solde dû</div>
+        <div class="serif" style="font-size:22px;font-weight:600;color:${totReste>0?'var(--ruby)':'var(--emerald)'}">${totReste.toFixed(2)} <span style="font-size:13px;font-family:'Plus Jakarta Sans',sans-serif">€</span></div>
+      </div>
+    </div>
+  </div>`;
 
-  trips.forEach(t=>{
-    html+=`<div style="margin:0 20px 8px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);padding:4px 16px">
-      ${dr('Date',t.date)}${dr('Trajet',esc(t.dep.split(',').slice(0,2).join(','))+'<br><span style="color:var(--fg3)">→ '+esc(t.arr.split(',').slice(0,2).join(','))+'</span>')}
-      ${dr('Motif',esc(t.motif))}${dr('Km',t.kmT+' km ('+CV_L[t.cv]+')')}
-      ${dr('Indemnité','<strong style="color:var(--gold)">'+t.ind.toFixed(2)+' €</strong>')}
-      ${dr('Statut',badge(t.status))}
-    </div>`;
+  // ── Tableau des trajets ──────────────────────────────────────
+  html+=`
+  <div style="margin:0 20px 16px;background:var(--ink3);border:1px solid var(--line);border-radius:var(--r);overflow:hidden">
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:540px">
+      <thead>
+        <tr style="background:var(--ink4);border-bottom:1px solid var(--line2)">
+          <th style="padding:10px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap">Date</th>
+          <th style="padding:10px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Départ → Arrivée</th>
+          <th style="padding:10px 12px;text-align:left;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Motif</th>
+          <th style="padding:10px 8px;text-align:center;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap">Km</th>
+          <th style="padding:10px 8px;text-align:center;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">CV</th>
+          <th style="padding:10px 12px;text-align:right;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap">Indemnité</th>
+          <th style="padding:10px 10px;text-align:center;font-size:9px;font-weight:700;color:var(--fg3);letter-spacing:.07em;text-transform:uppercase">Statut</th>
+        </tr>
+      </thead>
+      <tbody>`;
+
+  trips.forEach((t,i)=>{
+    const bg = i%2===0 ? 'var(--ink3)' : 'var(--ink4)';
+    const dep = t.dep.split(',')[0].trim();
+    const arr = t.arr.split(',')[0].trim();
+    html+=`<tr style="background:${bg};border-bottom:1px solid var(--line)">
+      <td style="padding:10px 12px;color:var(--fg2);white-space:nowrap;font-size:11px">${t.date}</td>
+      <td style="padding:10px 12px;max-width:200px">
+        <div style="font-weight:600;color:var(--fg);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(dep)}</div>
+        <div style="color:var(--fg3);font-size:10px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">→ ${esc(arr)}</div>
+      </td>
+      <td style="padding:10px 12px;color:var(--fg2);font-size:11px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.motif)}</td>
+      <td style="padding:10px 8px;text-align:center;font-weight:600;color:var(--fg);white-space:nowrap">${t.kmT}<span style="font-size:9px;color:var(--fg3)"> km${t.ar===2?' AR':''}</span></td>
+      <td style="padding:10px 8px;text-align:center;color:var(--fg2);font-size:11px">${CV_L[t.cv]}</td>
+      <td style="padding:10px 12px;text-align:right;font-weight:700;color:var(--gold);white-space:nowrap;font-family:'Cormorant Garamond',serif;font-size:16px">${t.ind.toFixed(2)} €</td>
+      <td style="padding:10px 10px;text-align:center">${badge(t.status)}</td>
+    </tr>`;
   });
 
-  html+=`<div style="margin:0 20px 16px;background:var(--gold-bg);border:1px solid var(--gold-ring);border-radius:var(--r);padding:14px 16px">
-    <div style="font-size:11.5px;color:var(--gold2);line-height:1.7">
-      <strong>Barème DGFiP 2025 — BOI-BAREME-000001</strong><br>
-      Indemnités calculées conformément à l'arrêté du 27 mars 2025. Frais professionnels réels déductibles du résultat imposable. Document généré le ${new Date().toLocaleDateString('fr-FR')}.
+  html+=`
+      </tbody>
+      <tfoot>
+        <tr style="background:var(--ink5);border-top:2px solid var(--line2)">
+          <td colspan="3" style="padding:12px 12px;font-weight:700;font-size:12px;color:var(--fg)">TOTAL — ${trips.length} trajet(s)</td>
+          <td style="padding:12px 8px;text-align:center;font-weight:700;color:var(--fg)">${totKm} km</td>
+          <td></td>
+          <td style="padding:12px 12px;text-align:right;font-weight:700;color:var(--gold);font-family:'Cormorant Garamond',serif;font-size:18px">${totInd.toFixed(2)} €</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  </div>`;
+
+  // ── Mention légale ────────────────────────────────────────────
+  html+=`
+  <div style="margin:0 20px 12px;background:var(--gold-bg);border:1px solid var(--gold-ring);border-radius:var(--r);padding:14px 16px">
+    <div style="font-size:11px;color:var(--gold2);line-height:1.7">
+      <strong>Base légale :</strong> Arrêté du 27 mars 2025 fixant les barèmes kilométriques — BOI-BAREME-000001.<br>
+      Indemnités calculées au barème officiel DGFiP 2025. Frais professionnels réels déductibles du résultat imposable (Art. 83 3° CGI).<br>
+      Document établi le ${new Date().toLocaleDateString('fr-FR')} · ${esc(p.soc||'Conformité du Patrimoine')}
     </div>
   </div>
-  <div style="display:flex;gap:10px;padding:0 20px 20px">
+  <div style="display:flex;gap:10px;padding:0 20px 20px" class="no-print">
     <button class="btn btn-ink" id="btn-share" style="flex:1;padding:12px">📤 Partager</button>
-    <button class="btn btn-gold" onclick="window.print()" style="flex:1">🖨️ Imprimer PDF</button>
+    <button class="btn btn-gold" onclick="window.print()" style="flex:1">🖨️ Imprimer / PDF</button>
   </div>`;
 
   out.innerHTML=html;
   out.querySelector('#btn-share')?.addEventListener('click',()=>{
-    const txt=`Note de frais KM — ${pL}\n${p.fn||''} ${p.ln||''} · ${p.soc||''}\n${totKm} km · ${totInd.toFixed(2)} €\n(Barème DGFiP 2025)`;
+    const txt=`Note de frais KM\n${pL} · ${esc((p.fn||'')+' '+(p.ln||''))}\n${p.soc||''}\n${totKm} km · ${totInd.toFixed(2)} € (barème DGFiP 2025)`;
     navigator.share?navigator.share({title:'Note de frais KM',text:txt}):(navigator.clipboard?.writeText(txt),toast('Copié ✓','tip'));
   });
   toast('Rapport généré ✓','ok');
+}
+
+function printReport(){
+  // S'assurer que le contenu print est généré
+  const pd=document.getElementById('print-content');
+  if(!pd){ toast('Générez d\'abord le rapport','err'); return; }
+  window.print();
 }
 
 // ═══════════════════════════════════════
@@ -1638,11 +1850,126 @@ function toast(msg,type='tip'){
   setTimeout(()=>{ el.style.transition='.3s'; el.style.opacity='0'; el.style.transform='translateY(-8px)'; setTimeout(()=>el.remove(),300); }, 3200);
 }
 
+
+// ═══════════════════════════════════════
+// PIN LOCK
+// ═══════════════════════════════════════
+let pinBuffer = '';
+let pinMode = 'check'; // 'check' | 'setup1' | 'setup2'
+let pinFirst = '';
+
+function pinKey(d){
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += d;
+  updatePinDots();
+  if(pinBuffer.length === 4) setTimeout(validatePin, 120);
+}
+function pinDel(){
+  pinBuffer = pinBuffer.slice(0,-1);
+  updatePinDots();
+  clearPinErr();
+}
+function updatePinDots(state){
+  for(let i=0;i<4;i++){
+    const dot = document.getElementById('pd'+i);
+    dot.className = 'pin-dot' + (i<pinBuffer.length?' filled':'') + (state==='err'?' error':'');
+  }
+}
+function clearPinErr(){ document.getElementById('pin-err').textContent=''; }
+function showPinErr(msg){
+  document.getElementById('pin-err').textContent = msg;
+  updatePinDots('err');
+  pinBuffer='';
+  setTimeout(()=>{ updatePinDots(); clearPinErr(); }, 900);
+}
+function validatePin(){
+  const stored = localStorage.getItem('kmpro_pin');
+  if(pinMode === 'check'){
+    if(pinBuffer === stored){
+      // Succès — masquer l'écran PIN
+      sessionStorage.setItem('kmpro_unlocked','1');
+      document.getElementById('pin-screen').classList.add('hidden');
+      setTimeout(()=>document.getElementById('pin-screen').style.display='none', 350);
+      pinBuffer='';
+    } else {
+      showPinErr('Code incorrect');
+    }
+  } else if(pinMode === 'setup1'){
+    pinFirst = pinBuffer;
+    pinBuffer='';
+    document.getElementById('pin-label').textContent='Confirmez le code';
+    updatePinDots();
+    pinMode = 'setup2';
+  } else if(pinMode === 'setup2'){
+    if(pinBuffer === pinFirst){
+      localStorage.setItem('kmpro_pin', pinBuffer);
+      toast('Code PIN configuré ✓','ok');
+      pinBuffer=''; pinMode='check'; pinFirst='';
+      closeSheet('sh-pin-setup');
+      // Mettre à jour le bouton dans profil
+      renderPinBtn();
+    } else {
+      showPinErr('Les codes ne correspondent pas');
+      pinMode='setup1'; pinFirst='';
+      document.getElementById('pin-label').textContent='Choisissez un code à 4 chiffres';
+    }
+  }
+}
+function openPinSetup(){
+  pinMode='setup1'; pinBuffer=''; pinFirst='';
+  document.getElementById('pin-label').textContent='Choisissez un code à 4 chiffres';
+  updatePinDots(); clearPinErr();
+  // Réutiliser le pin-screen en modal
+  const ps = document.getElementById('pin-screen');
+  ps.style.display='flex'; ps.classList.remove('hidden');
+  ps.style.background='rgba(8,9,9,0.97)';
+  // Ajouter bouton annuler
+  if(!document.getElementById('pin-cancel')){
+    const btn = document.createElement('button');
+    btn.id='pin-cancel'; btn.textContent='Annuler';
+    btn.style.cssText='margin-top:24px;background:none;border:none;color:var(--fg3);font-size:14px;font-weight:600;cursor:pointer;font-family:"Plus Jakarta Sans",sans-serif';
+    btn.onclick=()=>{ pinBuffer=''; pinMode='check'; pinFirst='';
+      document.getElementById('pin-label').textContent='Entrez votre code';
+      ps.classList.add('hidden');
+      setTimeout(()=>{ ps.style.display='none'; ps.style.background='var(--ink)'; },350);
+    };
+    ps.appendChild(btn);
+  }
+}
+function renderPinBtn(){
+  const wrap = document.getElementById('pin-btn-wrap');
+  if(!wrap) return;
+  const has = !!localStorage.getItem('kmpro_pin');
+  wrap.innerHTML = has
+    ? `<button class="btn btn-ink" style="flex:1;padding:11px;font-size:13px;border-radius:12px" onclick="openPinSetup()">🔑 Changer le code PIN</button>
+       <button class="btn btn-danger" style="flex:1;padding:11px;font-size:13px;border-radius:12px" onclick="removePin()">🔓 Désactiver</button>`
+    : `<button class="btn btn-gold" style="width:100%;padding:12px;border-radius:12px" onclick="openPinSetup()">🔒 Activer le verrouillage PIN</button>`;
+}
+function removePin(){
+  if(!confirm('Désactiver le verrouillage par code ?')) return;
+  localStorage.removeItem('kmpro_pin');
+  renderPinBtn(); toast('Verrouillage désactivé','tip');
+}
+function initPin(){
+  const stored = localStorage.getItem('kmpro_pin');
+  const unlocked = sessionStorage.getItem('kmpro_unlocked');
+  if(!stored || unlocked){
+    // Pas de PIN ou déjà déverrouillé dans cette session
+    document.getElementById('pin-screen').style.display='none';
+    return;
+  }
+  // Afficher l'écran PIN
+  document.getElementById('pin-label').textContent='Entrez votre code';
+  pinMode='check'; pinBuffer='';
+}
+
+
 // ═══════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   loadDB(); loadProfil(); renderAll(); selExp('backup');
+  initPin(); renderPinBtn();
   // iOS install hint
   if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.navigator.standalone)
     document.getElementById('install-hint').classList.add('show');
